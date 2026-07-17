@@ -9,13 +9,20 @@ const MIN_PANE = 220;
 const MAX_PANE = 640;
 const clamp = (v) => Math.min(MAX_PANE, Math.max(MIN_PANE, v));
 
+// Figma 플러그인 UI 는 data: URL 로 로드돼 localStorage 접근이 SecurityError 를
+// 던진다("Storage is disabled inside 'data:' URLs"). 안 되면 조용히 무시.
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* data: URL — 저장 불가 */ } },
+};
+
 export default function App() {
   const { error } = useCompare();
-  const [leftW, setLeftW] = useState(() => Number(localStorage.getItem("qa.leftW")) || 300);
-  const [rightW, setRightW] = useState(() => Number(localStorage.getItem("qa.rightW")) || 320);
+  const [leftW, setLeftW] = useState(() => Number(store.get("qa.leftW")) || 300);
+  const [rightW, setRightW] = useState(() => Number(store.get("qa.rightW")) || 320);
 
-  useEffect(() => localStorage.setItem("qa.leftW", leftW), [leftW]);
-  useEffect(() => localStorage.setItem("qa.rightW", rightW), [rightW]);
+  useEffect(() => store.set("qa.leftW", leftW), [leftW]);
+  useEffect(() => store.set("qa.rightW", rightW), [rightW]);
 
   return (
     <div className="app" style={{ gridTemplateColumns: `${leftW}px 4px 1fr 4px ${rightW}px` }}>
