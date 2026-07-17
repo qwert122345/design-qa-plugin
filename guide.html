@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design QA Compare — 사용 가이드</title>
+<style>
+  :root {
+    --paper: #f1f3f5;
+    --surface: #ffffff;
+    --ink: #191d23;
+    --ink-muted: #5b6472;
+    --ink-faint: #8992a0;
+    --line: #dde2e7;
+    --line-strong: #c7cdd4;
+    --accent: #d6472a;
+    --accent-ink: #ffffff;
+    --accent-wash: #fbeae5;
+    --code-bg: #14171c;
+    --code-ink: #e7eaee;
+    --code-accent: #ff8f6b;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14171c;
+      --surface: #1b1f26;
+      --ink: #e7eaee;
+      --ink-muted: #97a0ac;
+      --ink-faint: #6b7481;
+      --line: #2a2f38;
+      --line-strong: #3a404b;
+      --accent: #ff6b45;
+      --accent-ink: #14171c;
+      --accent-wash: #2c1f1c;
+      --code-bg: #0e1013;
+      --code-ink: #dfe3e8;
+      --code-accent: #ff9169;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  .mono {
+    font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 28px 96px;
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead { margin-bottom: 40px; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--accent);
+    transform: rotate(45deg);
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    font-size: 16px;
+    color: var(--ink-muted);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Nav ---------- */
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    padding: 14px 0;
+    margin: 32px 0 44px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  nav.toc a {
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc a span.mono { color: var(--ink-faint); margin-right: 4px; }
+
+  /* ---------- Sections ---------- */
+
+  section { margin-bottom: 56px; scroll-margin-top: 24px; }
+
+  h2 {
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin: 0 0 24px;
+    max-width: 60ch;
+  }
+
+  /* ---------- Prereq checklist ---------- */
+
+  .checklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 560px) {
+    .checklist { grid-template-columns: 1fr; }
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13.5px;
+  }
+  .checklist li::before {
+    content: "";
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+    border-radius: 4px;
+    border: 1.5px solid var(--line-strong);
+  }
+  .checklist b { display: block; font-weight: 600; margin-bottom: 2px; }
+  .checklist span.hint { color: var(--ink-muted); font-size: 12.5px; }
+
+  /* ---------- Steps ---------- */
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    padding: 20px 0;
+    border-top: 1px solid var(--line);
+  }
+  .step:last-child { padding-bottom: 0; }
+
+  .step-num {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: var(--accent);
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-body h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 3px 0 6px;
+  }
+  .step-body p {
+    font-size: 13.75px;
+    color: var(--ink-muted);
+    margin: 0 0 10px;
+  }
+  .step-body p:last-child { margin-bottom: 0; }
+  .step-body .tag {
+    display: inline-block;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: var(--accent-wash);
+    padding: 2px 7px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+  }
+
+  pre {
+    margin: 0;
+    padding: 12px 14px;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    overflow-x: auto;
+  }
+  pre code { font-family: inherit; }
+  pre .c { color: #7d8590; }
+
+  code.inline {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--accent-wash);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ---------- Diagram ---------- */
+
+  .diagram {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 22px 0 8px;
+  }
+  .diagram-pane {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .diagram-pane .label {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .diagram-swatch {
+    height: 64px;
+    border-radius: 5px;
+    background: repeating-linear-gradient(135deg, var(--line) 0 6px, transparent 6px 12px);
+    border: 1px dashed var(--line-strong);
+  }
+  .diagram-footer {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--accent-wash);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ---------- Troubleshooting table ---------- */
+
+  .tt {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .tt-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 14px 16px;
+  }
+  .tt-row + .tt-row { border-top: 1px solid var(--line); }
+  .tt-symptom {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    width: fit-content;
+    margin-bottom: 6px;
+  }
+  .tt-fix {
+    font-size: 13.25px;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+  .tt-fix code.inline { color: var(--ink); background: var(--paper); }
+
+  /* ---------- Footer ---------- */
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+
+  a { color: inherit; }
+
+  ::selection { background: var(--accent); color: var(--accent-ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">내부 도구 · Figma 플러그인</div>
+    <h1>Design QA Compare 사용 가이드</h1>
+    <p class="lede">
+      Figma 디자인과 실제 구현된 안드로이드 화면을 나란히 놓고 비교하면서,
+      어긋난 부분을 그 자리에서 기록하고 <strong>PNG</strong> 또는
+      <strong>Figma 페이지</strong>로 바로 넘길 수 있는 QA 도구입니다.
+      Figma 파일과 GitHub 저장소는 어떤 경우에도 수정하지 않습니다.
+    </p>
+  </div>
+
+  <nav class="toc">
+    <a href="#prereqs"><span class="mono">01</span>준비물</a>
+    <a href="#setup"><span class="mono">02</span>설치 (한 번만)</a>
+    <a href="#usage"><span class="mono">03</span>매일 쓰는 법</a>
+    <a href="#troubleshooting"><span class="mono">04</span>문제 해결</a>
+  </nav>
+
+  <section id="prereqs">
+    <h2>준비물</h2>
+    <p class="section-desc">아래 네 가지가 갖춰져 있어야 설치를 시작할 수 있어요.</p>
+    <ul class="checklist">
+      <li>
+        <div>
+          <b>Figma Desktop 앱</b>
+          <span class="hint">브라우저판은 개발 플러그인 설치가 안 돼요</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <b>Node.js 18 이상</b>
+          <span class="hint">터미널에 <code class="inline">node -v</code>로 확인</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <b>Android platform-tools (adb)</b>
+          <span class="hint">보통 Android Studio 설치 시 함께 깔림</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <b>에뮬레이터 또는 실기기</b>
+          <span class="hint">QA할 빌드가 설치되어 있고, USB 디버깅 허용된 상태</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section id="setup">
+    <h2>설치 (한 번만)</h2>
+    <p class="section-desc">
+      전달받은 zip 파일마다 한 번씩만 해두면 돼요. 코드가 새로 전달되면 04번 문제 해결 항목의
+      마지막 안내만 다시 하면 됩니다.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>압축 풀기</h3>
+          <p>전달받은 <code class="inline">.zip</code> 파일을 원하는 위치에 압축 해제합니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <span class="tag">TERMINAL</span>
+          <p>헬퍼 서버 의존성 설치. 이 서버는 QA 중에만 로컬에서 켜두는 작은 프로그램으로,
+             내 컴퓨터의 adb로 에뮬레이터 화면을 찍어서 플러그인에 넘겨주는 역할만 해요.</p>
+          <pre><code><span class="c"># 압축을 푼 폴더 안에서</span>
+cd helper-server
+npm install</code></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <span class="tag">TERMINAL</span>
+          <p>플러그인을 빌드합니다.</p>
+          <pre><code>cd figma-plugin
+npm install
+npm run build</code></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p>Figma Desktop 우측 상단 메뉴 → <b>Plugins → Development → Import plugin from manifest…</b>
+             → <code class="inline">figma-plugin/manifest.json</code> 선택.</p>
+          <p>이제 <b>Plugins → Development</b> 목록에 "Design QA Compare"가 보일 거예요.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="usage">
+    <h2>매일 쓰는 법</h2>
+    <p class="section-desc">
+      설치가 끝났다면 QA할 때마다 이 다섯 단계만 반복하면 됩니다.
+    </p>
+
+    <div class="diagram">
+      <div class="diagram-pane">
+        <div class="label">구현 화면</div>
+        <div class="diagram-swatch"></div>
+      </div>
+      <div class="diagram-pane">
+        <div class="label">Figma 프레임</div>
+        <div class="diagram-swatch"></div>
+      </div>
+      <div class="diagram-footer">↓ chips + 텍스트로 QA 메모 → PNG 또는 Figma로 내보내기</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p><code class="inline">cd helper-server && npm start</code>로 헬퍼 서버를 켜두고,
+             Figma에서 플러그인을 실행합니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>상단에서 기기를 선택합니다. <b>그 기기를 처음 쓴다면</b> "밀도 360dp 맞추기"를
+             한 번 눌러주세요 — 캡처되는 화면의 글자 크기가 Figma와 맞게 보정돼요
+             (안드로이드 설정의 "디스플레이 크기"를 조정하는 것과 같은 효과이며 언제든
+             "밀도 초기화"로 되돌릴 수 있어요). 위치를 잡을 땐 "실시간 보기 시작"으로
+             화면을 보며 이동하면 편해요.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Figma 캔버스에서 비교할 프레임을 1개 선택합니다. 우측에 자동으로 표시돼요.
+             프레임을 바꿔 선택하면 이전에 쓰던 QA 메모는 자동으로 비워집니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p>하단 왼쪽에서 chip(typography · color · icon · margin · spacing · radius ·
+             typo_error · component)을 고르고, 어떤 부분이 어떻게 다른지 텍스트로 적은 뒤
+             "항목 추가"를 누릅니다. 필요한 만큼 반복해서 쌓아두면 오른쪽에 목록으로 모여요.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <p>다 됐으면 아래 두 버튼 중 하나를 누릅니다. 클릭한 순간 화면을 알아서
+             캡처하기 때문에 따로 "캡처" 버튼을 누를 필요는 없어요.</p>
+          <p>
+            <b>PNG로 내보내기</b> — 구현 화면과 Figma 프레임을 나란히 놓고 QA 메모를 합친
+            PNG 한 장이 다운로드됩니다. 슬랙 공유나 첨부용으로 좋아요.
+          </p>
+          <p>
+            <b>Figma에 내보내기</b> — 원본 디자인 페이지는 그대로 두고, 플러그인 전용
+            <code class="inline">Design QA Handoff</code> 페이지에 구현 화면 캡처본과
+            선택한 프레임의 복사본, chip 형태의 QA 목록을 나란히 추가해줍니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="troubleshooting">
+    <h2>문제 해결</h2>
+    <p class="section-desc">대부분 헬퍼 서버 상태와 관련된 문제예요.</p>
+    <div class="tt">
+      <div class="tt-row">
+        <div class="tt-symptom">헬퍼 서버 연결 실패 (localhost:4747)</div>
+        <p class="tt-fix"><code class="inline">helper-server</code> 폴더에서 <code class="inline">npm start</code>가 실행 중인지 확인하세요.</p>
+      </div>
+      <div class="tt-row">
+        <div class="tt-symptom">adb를 찾을 수 없습니다</div>
+        <p class="tt-fix">Android platform-tools가 설치되어 있는지, PATH에 등록되어 있는지 확인하세요.</p>
+      </div>
+      <div class="tt-row">
+        <div class="tt-symptom">DPI 정보를 가져오지 못했습니다</div>
+        <p class="tt-fix">괄호 안 원인(기기 미인증/오프라인 등)을 확인하세요. 이 상태에서도 내보내기는 계속 동작해요.</p>
+      </div>
+      <div class="tt-row">
+        <div class="tt-symptom">밀도 맞추기 실패: 요청 실패 (404 Not Found)</div>
+        <p class="tt-fix">헬퍼 서버 코드가 업데이트된 뒤 재시작을 안 한 경우예요. 서버를 껐다가 다시 켜보세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>코드가 새로 전달되면: 헬퍼 서버 재시작 + <code class="inline">npm run build</code> 후 플러그인 다시 실행</span>
+    <span>궁금한 점은 만든 사람에게 물어보세요</span>
+  </footer>
+
+</div>
+</body>
+</html>

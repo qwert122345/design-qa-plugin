@@ -1,0 +1,14 @@
+{
+  "name": "figma-design-qa-compare",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.94.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0"
+  }
+}

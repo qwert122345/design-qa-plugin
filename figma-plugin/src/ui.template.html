@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <style>
+    /* __STYLES__ */
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <header class="topbar">
+      <select id="device-select"></select>
+      <button id="refresh-devices" title="기기 목록 새로고침">새로고침</button>
+      <button id="live-toggle-btn">실시간 보기 시작</button>
+      <button id="calibrate-density-btn" title="이 기기의 밀도를 360dp 폭에 맞게 조정합니다 (설정 > 디스플레이 크기와 동일한 효과, 되돌릴 수 있음)">밀도 360dp
+        맞추기</button>
+      <button id="reset-density-btn" title="밀도를 기기 기본값으로 되돌립니다">밀도 초기화</button>
+    </header>
+
+    <main class="panes">
+      <section class="pane">
+        <div class="pane-header">
+          <span>구현 화면 (실기기/에뮬레이터)</span>
+          <span id="device-info" class="info-text"></span>
+        </div>
+        <div class="pane-body" id="impl-pane">
+          <div class="placeholder">기기를 선택해주세요 (내보내기/핸드오프 시 자동 캡처됩니다)</div>
+        </div>
+      </section>
+
+      <section class="pane">
+        <div class="pane-header">
+          <span id="figma-frame-name">Figma 프레임</span>
+          <span id="figma-frame-info" class="info-text"></span>
+        </div>
+        <div class="pane-body" id="figma-pane">
+          <div class="placeholder">Figma에서 프레임을 선택해주세요</div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="qa-panel">
+      <div class="qa-panel-columns">
+        <div class="qa-controls">
+          <div class="chips" id="chips">
+            <button class="chip" data-chip="typography">typography</button>
+            <button class="chip" data-chip="color">color</button>
+            <button class="chip" data-chip="icon">icon</button>
+            <button class="chip" data-chip="margin">margin</button>
+            <button class="chip" data-chip="spacing">spacing</button>
+            <button class="chip" data-chip="radius">radius</button>
+            <button class="chip" data-chip="typo_error">typo_error</button>
+            <button class="chip" data-chip="component">component</button>
+          </div>
+          <div class="qa-input-row">
+            <textarea id="qa-text" placeholder="예: 버튼 아이콘 색상이 디자인과 다름 → primary/500으로 수정 필요"></textarea>
+            <button id="add-qa-item">항목 추가</button>
+          </div>
+        </div>
+
+        <div class="qa-results">
+          <ul id="qa-list" class="qa-list"></ul>
+        </div>
+      </div>
+
+      <div class="export-row">
+        <button id="export-btn">PNG로 내보내기</button>
+        <button id="handoff-figma-btn">Figma에 내보내기</button>
+        <span id="export-status"></span>
+      </div>
+    </footer>
+  </div>
+  <script>
+    /* __SCRIPT__ */
+  </script>
+</body>
+
+</html>
