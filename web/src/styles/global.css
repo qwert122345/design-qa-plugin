@@ -321,14 +321,26 @@ label { display: block; color: var(--ink-faint); margin: 8px 0 4px; font-size: 1
 
 /* ── 축소(compact) 버튼 + 창 크기 조절 핸들 ───────────────────────
    축소 버튼은 우상단 고정, 창 리사이즈 핸들은 우하단 고정. */
-.compact-toggle, .spec-toggle {
+.compact-toggle, .compact-capture {
   position: fixed; top: 4px; z-index: 50;
   font-size: 11px; padding: 2px 8px; line-height: 1.6;
   background: var(--chrome-2); border: 1px solid var(--rule);
 }
 .compact-toggle { right: 6px; }
-.spec-toggle { right: 74px; }
-.compact-toggle:hover, .spec-toggle:hover { background: var(--chrome); }
+.compact-toggle:hover { background: var(--chrome); }
+.compact-capture { left: 6px; }
+
+/* 스펙 패널 여닫기 탭 — 패널 왼쪽 가장자리(세로 중앙)에 붙는 아이콘 버튼 */
+.spec-edge-toggle {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 51;
+  width: 15px; height: 52px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
+  background: var(--chrome-2); color: var(--ink-dim);
+  border: 1px solid var(--rule); border-right: none;
+  border-radius: 5px 0 0 5px; cursor: pointer;
+}
+.spec-edge-toggle:hover { background: var(--chrome); color: var(--ink); }
 
 .win-resize {
   position: fixed; right: 0; bottom: 0; width: 16px; height: 16px;

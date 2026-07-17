@@ -23,22 +23,6 @@ export default function ControlsPanel() {
         </button>
       </div>
       <DeviceStatus status={c.deviceStatus} />
-      {/* 밀도 캘리브레이션 — 기기 밀도를 360dp 기준으로 덮어써 캡처 텍스트 크기를 Figma 와 맞춤 */}
-      <div className="row" style={{ marginTop: 6 }}>
-        <button
-          onClick={c.calibrateDensity}
-          disabled={c.busy}
-          title="기기 밀도를 360dp 기준으로 맞춰, 캡처되는 화면의 텍스트 크기가 Figma(1x)와 일치하게 합니다"
-        >
-          밀도 360dp 맞추기
-        </button>
-        <button onClick={c.resetDensity} disabled={c.busy} title="기기 밀도를 원래대로 되돌립니다">
-          밀도 초기화
-        </button>
-      </div>
-      {c.densityInfo && (
-        <p className="dim" style={{ fontSize: 11, marginTop: 4 }}>{c.densityInfo}</p>
-      )}
       <CaptureSaveDialog />
       {/* 이름 중복 확인 — "화면 캡처"/"메모 저장" 양쪽 저장 흐름이 공유하므로 여기 한 번만 건다. */}
       <DuplicateNameDialog />

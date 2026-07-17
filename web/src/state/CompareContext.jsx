@@ -36,7 +36,6 @@ export function CompareProvider({ children }) {
   const [deviceStatus, setDeviceStatus] = useState(null);
   const [deviceImg, setDeviceImg] = useState(null); // objectURL
   const [hierarchy, setHierarchy] = useState([]);
-  const [densityInfo, setDensityInfo] = useState(null); // 밀도 캘리브레이션 상태 메시지
 
   // ── figma (플러그인: 현재 Figma 선택을 code.ts 가 push) ─────
   const [selectedFrame, setSelectedFrame] = useState(null);
@@ -145,34 +144,6 @@ export function CompareProvider({ children }) {
       setError(asError(e, "상태 조회 실패"));
     }
   }, []);
-
-  // 기기 밀도를 360dp 기준으로 덮어써 캡처 텍스트 크기를 Figma 1x 와 맞춘다.
-  // (기기 자체 밀도가 바뀌므로 이후 캡처부터 반영. resetDensity 로 복구.)
-  const calibrateDensity = useCallback(async () => {
-    setBusy(true);
-    try {
-      const r = await deviceApi.calibrateDensity(360);
-      await refreshStatus();
-      setDensityInfo(`밀도 ${r.density} 적용 (${r.widthPx}px → ${r.widthDp}dp). 다시 캡처하면 반영됩니다.`);
-    } catch (e) {
-      setError(asError(e, "밀도 맞추기 실패"));
-    } finally {
-      setBusy(false);
-    }
-  }, [refreshStatus]);
-
-  const resetDensity = useCallback(async () => {
-    setBusy(true);
-    try {
-      await deviceApi.resetDensity();
-      await refreshStatus();
-      setDensityInfo("밀도 초기화됨. 다시 캡처하면 반영됩니다.");
-    } catch (e) {
-      setError(asError(e, "밀도 초기화 실패"));
-    } finally {
-      setBusy(false);
-    }
-  }, [refreshStatus]);
 
   // 새 캡처 세션 시작(id 발급 + 실제 캡처)
   const startNewCaptureSession = useCallback(async () => {
@@ -477,7 +448,6 @@ export function CompareProvider({ children }) {
     // device
     deviceStatus, deviceImg, hierarchy,
     captureDevice, refreshStatus, requestCapture, openMirror,
-    densityInfo, calibrateDensity, resetDensity,
     // 캡처 저장소
     captureSessionId, captureSaved, pendingCapture, cancelRecapture,
     discardAndRecapture, saveAndRecapture,

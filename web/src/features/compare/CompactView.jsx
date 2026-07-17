@@ -3,13 +3,19 @@
 import { useRef, useState, useLayoutEffect } from "react";
 import { useCompare } from "../../state/CompareContext.jsx";
 import { CONSTANTS } from "../../config/constants.js";
+import CaptureSaveDialog from "../controls/CaptureSaveDialog.jsx";
 import NotesLayer from "./NotesLayer.jsx";
 
 export default function CompactView({ onExpand }) {
   const c = useCompare();
   return (
     <div className="compact-view">
+      <button className="compact-capture primary" onClick={c.requestCapture} disabled={c.busy} title="기기 화면을 다시 캡처">
+        ● 화면 캡처
+      </button>
       <button className="compact-toggle" onClick={onExpand} title="원래 화면으로">↔ 확대</button>
+      {/* 재캡처 시 저장 안 된 메모가 있으면 확인 — 전체 뷰와 동일 흐름 */}
+      <CaptureSaveDialog />
       <div className="compact-imgs">
         <figure>
           <figcaption>기기 캡처{c.deviceImg && c.captureSessionId ? " · 클릭해 메모" : ""}</figcaption>

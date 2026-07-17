@@ -82,10 +82,17 @@ export default function App() {
       className="app"
       style={{ gridTemplateColumns: rightOpen ? `${leftW}px 4px 1fr 4px ${rightW}px` : `${leftW}px 4px 1fr` }}
     >
-      <button className="spec-toggle" onClick={() => setRightOpen((o) => !o)} title="스펙 패널 열기/닫기">
-        {rightOpen ? "스펙 ▶" : "◀ 스펙"}
-      </button>
       <button className="compact-toggle" onClick={toggleCompact} title="축소 — 기기/Figma 두 화면만 보기">⊟ 축소</button>
+      {/* 스펙 패널 여닫기 — 패널 왼쪽 가장자리(세로 중앙)에 붙은 아이콘 탭 */}
+      <button
+        className="spec-edge-toggle"
+        style={{ right: rightOpen ? `${rightW}px` : 0 }}
+        onClick={() => setRightOpen((o) => !o)}
+        title={rightOpen ? "스펙 패널 닫기" : "스펙 패널 열기"}
+        aria-label={rightOpen ? "스펙 패널 닫기" : "스펙 패널 열기"}
+      >
+        {rightOpen ? "›" : "‹"}
+      </button>
       <aside className="pane">
         <ControlsPanel />
       </aside>

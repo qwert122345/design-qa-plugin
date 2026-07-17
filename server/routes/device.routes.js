@@ -1,7 +1,7 @@
 // 디바이스 라우트 — HTTP 껍데기만. 로직은 device.service.js.
 // express 5 는 거부된 프라미스를 자동으로 에러 핸들러에 넘긴다 → try/catch 불필요.
 import { Router } from "express";
-import { getStatus, capturePng, getHierarchy, openMirror, calibrateDensity, resetDensity } from "../services/device.service.js";
+import { getStatus, capturePng, getHierarchy, openMirror } from "../services/device.service.js";
 
 const router = Router();
 
@@ -29,17 +29,6 @@ router.get("/hierarchy", async (req, res) => {
 router.post("/mirror", async (req, res) => {
   const { screen } = req.body ?? {};
   res.json(await openMirror(screen));
-});
-
-// POST /api/device/calibrate-density — 기기 밀도를 targetWidthDp(기본 360) 기준으로 덮어씀
-router.post("/calibrate-density", async (req, res) => {
-  const { targetWidthDp } = req.body ?? {};
-  res.json(await calibrateDensity(targetWidthDp));
-});
-
-// POST /api/device/reset-density — 밀도 덮어쓰기 해제
-router.post("/reset-density", async (req, res) => {
-  res.json(await resetDensity());
 });
 
 export default router;

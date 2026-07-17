@@ -55,9 +55,6 @@ export const deviceApi = {
   capture: () => getObjectUrl(`/api/device/capture?t=${Date.now()}`),
   hierarchy: () => getJson("/api/device/hierarchy"),
   mirror: (screen) => sendJson("/api/device/mirror", "POST", { screen }),
-  // 기기 밀도 캘리브레이션 — 캡처 텍스트 크기를 Figma 1x(360dp)에 맞춤
-  calibrateDensity: (targetWidthDp) => sendJson("/api/device/calibrate-density", "POST", { targetWidthDp }),
-  resetDensity: () => sendJson("/api/device/reset-density", "POST", {}),
 };
 
 export const notesApi = {

@@ -30,10 +30,6 @@ export const adb = {
   wmSize: () => run(["shell", "wm", "size"]),
   // `adb shell wm density` (예: "Physical density: 420")
   wmDensity: () => run(["shell", "wm", "density"]),
-  // 기기 밀도 덮어쓰기 / 초기화 — 캡처 텍스트 크기를 Figma 1x 에 맞추는 캘리브레이션용.
-  // (기기 설정의 "디스플레이 크기"를 바꾸는 것과 같은 효과. 설치·푸시 없음.)
-  wmDensitySet: (n) => run(["shell", "wm", "density", String(n)]),
-  wmDensityReset: () => run(["shell", "wm", "density", "reset"]),
   // 기기 이름. marketname("Galaxy S25 Edge")이 있으면 그게 낫고, 없는 기기가 많아
   // model("SM-N971N")로 떨어진다. 한 번의 호출로 둘 다 받아 첫 줄부터 고른다.
   model: () => run(["shell", "getprop ro.product.marketname; getprop ro.product.model"]),
