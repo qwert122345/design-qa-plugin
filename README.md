@@ -1,62 +1,65 @@
-# Design QA Compare (Figma 플러그인)
+# Android 디자인 QA 대조 — Figma 플러그인
 
-Figma 디자인 프레임과 실제 구현된 안드로이드 앱 화면을 나란히 비교하고, QA 항목을 정리해 PNG로 핸드오프하는 내부 도구입니다.
+> ### 👋 디자이너 / QA라면 여기부터
+> **[`docs/SETUP_TEAM.md`](docs/SETUP_TEAM.md) — 처음 세팅하기** (터미널 몰라도 됩니다. 20분)
+> 세팅을 마쳤다면 **[`docs/GUIDE.md`](docs/GUIDE.md) — 사용법**
+>
+> 아래 내용은 개발자용입니다. 안 읽으셔도 됩니다.
 
-Figma 파일은 **읽기 전용**으로만 사용합니다 — 어떤 노드도 수정하지 않습니다.
+디자이너가 **Figma 디자인**과 **실제 개발된 안드로이드 화면**을 겹쳐 비교하는 Figma 플러그인.
+[웹 툴 버전](https://github.com/qwert122345/design-qa)을 플러그인으로 이식한 것으로, 대조할 디자인을
+fileKey/토큰 없이 **Figma 캔버스에서 선택**하면 바로 읽는다. 기기 화면 캡처·QA 메모 저장은 로컬
+헬퍼 서버(`server/`)가 담당한다.
 
-## 구성
+Figma 노드는 **읽기 전용** — 어떤 기존 노드도 수정하지 않는다. ("Figma에 추가"만 현재 페이지에
+새 이미지 노드를 만든다.)
 
-- `figma-plugin/` — Figma 플러그인 본체
-- `helper-server/` — QA 진행 중에만 로컬에서 띄우는 작은 서버. `adb`로 에뮬레이터/실기기 화면을 캡처해 플러그인에 전달하는 역할만 합니다.
+- 플러그인 UI: Vite + React (`web/`), 단일 HTML 로 인라인 빌드 → `figma-plugin/dist/`
+- 플러그인 메인 스레드: `figma-plugin/code.ts` (esbuild → `dist/code.js`)
+- 헬퍼 서버: Node + Express (`server/`, 포트 **3011**) — adb 캡처·노트·캡처저장·토큰
+- DB 없음 · 인증 없음 · 로컬 전용 · macOS + 갤럭시(안드로이드 실기기)
 
-## 사전 준비
-
-- Figma Desktop 앱
-- Node.js 18 이상
-- Android platform-tools (`adb`가 PATH에 있어야 함)
-- QA할 브랜치/PR의 debug 빌드가 설치된 에뮬레이터 또는 실기기 (USB 디버깅 허용)
-
-## 1. 헬퍼 서버 실행
-
-```bash
-cd helper-server
-npm install
-npm start
-```
-
-`http://localhost:4747`에서 대기합니다. QA 세션 동안 계속 켜둔 상태로 두세요.
-
-## 2. 플러그인 빌드
+## 빠른 시작 (개발자)
 
 ```bash
-cd figma-plugin
+nvm use              # node 20
 npm install
-npm run build
+npm run build        # 플러그인 UI(dist/index.html) + code.js 빌드
+npm run server       # 헬퍼 서버(:3011) — 기기 캡처용, 켜둔 채로
 ```
 
-## 3. Figma에 플러그인 설치
+그다음 Figma Desktop → Plugins → Development → **Import plugin from manifest…** →
+`figma-plugin/manifest.json`.
 
-Figma Desktop → 우측 상단 메뉴 → Plugins → Development → **Import plugin from manifest…** → `figma-plugin/manifest.json` 선택.
+UI 만 고치며 볼 때는 `npm run dev`(vite, :5173) 로 브라우저에서 확인할 수 있다(플러그인
+호스트가 없으므로 Figma 선택 push 는 안 오지만 나머지 UI·서버 연동은 동작).
 
-## 사용 흐름
+## 구조
 
-1. Figma에서 플러그인 실행
-2. 상단에서 기기 선택 → 처음 쓰는 기기라면 **"밀도 360dp 맞추기"**를 한 번 눌러주세요 (기기의 실제 밀도를 계산해서 자동으로 맞춰줌 — 이후 캡처되는 화면의 텍스트 크기가 Figma와 맞게 됨). 되돌리려면 "밀도 초기화"
-3. Figma 캔버스에서 비교할 프레임 1개 선택 → 우측에 자동 표시 (프레임 크기가 px로 함께 표시됨). 프레임을 바꿔 선택하면 이전에 작성 중이던 QA 메모는 자동으로 초기화됩니다
-4. 하단에서 chips(typography/color/icon/margin/spacing/radius/typo_error/component)를 선택하고 텍스트로 어긋난 부분과 개선 방향을 적어 QA 항목 추가
-5. "PNG로 내보내기" 또는 "Figma에 핸드오프" 클릭 → 클릭 시점에 선택된 기기 화면을 자동으로 캡처한 뒤 진행됨 (별도의 "캡처" 버튼 없음)
-   - PNG로 내보내기: 구현 화면을 가로 360px 고정(비율 유지)으로 맞춰 Figma 프레임과 나란히 배치하고 QA 항목을 합친 PNG가 다운로드됨
-   - Figma에 핸드오프: 플러그인 전용 "Design QA Handoff" 페이지에 (구현 화면 캡처 + 선택 프레임 복사본 + chip 형태의 QA 목록)을 추가함. 원본 디자인 페이지/프레임은 건드리지 않음
+| 경로 | 역할 |
+|---|---|
+| `web/` | 플러그인 UI(React). `src/figmaBridge.js` 가 code.ts ↔ UI postMessage |
+| `figma-plugin/code.ts` | Figma 메인 스레드 — 선택 노드 export/spec, 창 resize, 이미지 노드 추가 |
+| `figma-plugin/manifest.json` | 플러그인 매니페스트 (`networkAccess` 로 localhost:3011 허용) |
+| `server/` | 헬퍼 서버 — `routes`/`services`/`adapters(adb, scrcpy)`/`parsers` |
+| `tokens/` | 디자인 토큰 JSON |
+| `reference/` | 참고용 — 팀원이 만든 초기 prezel 플러그인 원본 |
 
-## 문제 해결
+## 코드가 바뀐 뒤 반영
 
-- 기기 목록이 "헬퍼 서버 연결 실패"로 뜨면 → `helper-server`가 실행 중인지 확인
-- "adb를 찾을 수 없습니다" → Android platform-tools 설치 후 PATH 등록
-- 기기가 여러 개 연결되어 있으면 드롭다운에서 원하는 기기를 선택하세요 (`adb devices -l` 기준)
-- "DPI 정보를 가져오지 못했습니다"가 표시되면 → 괄호 안에 표시되는 원인(예: 기기 미인증/오프라인)을 확인하세요. 이 경우에도 기기명은 항상 표시되고, PNG/핸드오프는 가로 360px 고정 방식으로 계속 동작합니다
-- "밀도 맞추기 실패: 요청 실패 (404 Not Found)" → 헬퍼 서버 코드가 업데이트된 뒤 재시작을 안 한 경우입니다. `helper-server`를 껐다가 다시 `npm start`
+- 서버: `Ctrl+C` 로 끄고 `npm run server` 재시작
+- 플러그인: `npm run build` 후 Figma에서 플러그인 다시 실행 (재등록 불필요)
+- 팀원용 `run.command` 은 더블클릭 시 `npm run build` 를 자동으로 다시 돌린다
 
-## 코드가 바뀐 뒤 반영하는 법
+## Figma 플러그인 환경 주의 (data: URL / 비보안 컨텍스트)
 
-- `helper-server`: 터미널에서 `Ctrl+C`로 끄고 `npm start`로 재시작
-- `figma-plugin`: `cd figma-plugin && npm run build` 후, Figma에서 플러그인을 다시 실행(우클릭 → Run, 또는 Plugins → Development 목록에서 다시 선택)
+플러그인 UI 는 `data:` URL 로 로드돼 secure context 가 아니다. 그래서:
+- 앱 번들은 **classic 스크립트**여야 함 (inline `type="module"` 미실행) → vite.config 가 iife+후처리
+- `localStorage` 접근은 SecurityError → 가드 래퍼
+- `crypto.randomUUID` / `navigator.clipboard` 없음 → 폴백 / 대체(이미지는 Figma 노드로 추가)
+
+## 토큰 파싱만 콘솔로 확인
+
+```bash
+npm run tokens:verify
+```
