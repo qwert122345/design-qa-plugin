@@ -12,9 +12,10 @@ import path from "node:path";
 // Figma 플러그인 iframe(null origin + CSP)은 인라인 `type="module"` 스크립트를
 // 실행하지 않는다 → 그대로 두면 UI 가 검은 화면. 그래서:
 //  1) 번들을 iife 로 뽑아 classic 스크립트로도 안전하게 만들고,
-//  2) 빌드 끝에 index.html 의 type="module" 를 떼어 classic <script> 로 바꾼 뒤,
-//  3) 그 스크립트를 </body> 직전으로 옮긴다. (module 은 defer 라 DOM 이후 실행되지만
-//     classic 은 즉시 실행 → head 에 있으면 #root 가 아직 없어 React 가 못 붙는다.)
+//  2) 빌드 끝에 index.html 의 여는 태그 `type="module"` 만 떼어 classic <script> 로.
+// classic 은 즉시 실행이라 head 에 있으면 #root 전에 돌지만, main.jsx 가
+// DOMContentLoaded 를 기다렸다 마운트하므로 스크립트를 옮길 필요는 없다.
+// (스크립트를 정규식으로 옮기면 번들 안의 "<script></script>" 같은 문자열에서 깨진다.)
 const API_BASE = process.env.VITE_API_BASE || "";
 const OUT_DIR = path.resolve(__dirname, "figma-plugin/dist");
 
@@ -24,14 +25,8 @@ function figmaClassicScript() {
     closeBundle() {
       const file = path.join(OUT_DIR, "index.html");
       if (!fs.existsSync(file)) return;
-      let html = fs.readFileSync(file, "utf8").replace(/<script type="module"(\s+crossorigin)?>/g, "<script>");
-      // 인라인 <script>…</script>(src 없는 것)를 모두 body 끝으로 이동 — DOM 이후 실행 보장
-      const scripts = [];
-      html = html.replace(/<script>[\s\S]*?<\/script>/g, (m) => {
-        scripts.push(m);
-        return "";
-      });
-      html = html.replace("</body>", scripts.join("\n") + "\n</body>");
+      // 여는 태그의 속성만 교체 — 스크립트 내용은 건드리지 않는다(안전).
+      const html = fs.readFileSync(file, "utf8").replace(/<script type="module"(\s+crossorigin)?>/g, "<script>");
       fs.writeFileSync(file, html);
     },
   };

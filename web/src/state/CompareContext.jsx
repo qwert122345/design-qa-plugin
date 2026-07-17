@@ -7,11 +7,22 @@ import { CONSTANTS } from "../config/constants.js";
 const Ctx = createContext(null);
 export const useCompare = () => useContext(Ctx);
 
+// 헬퍼 서버가 안 떠 있으면 fetch 자체가 실패한다(TypeError: Failed to fetch /
+// ERR_CONNECTION_REFUSED). 그 경우 원인을 콕 집어 안내한다 — 이게 플러그인에서
+// 가장 흔한 첫 실패다.
+const HELPER_DOWN =
+  "헬퍼 서버(localhost:3011)에 연결할 수 없습니다. 터미널에서 `npm run server` 를 실행한 뒤 플러그인을 다시 열어주세요.";
+const asError = (e, fallback) =>
+  /failed to fetch|load failed|networkerror|err_connection|fetch/i.test(e?.message || "")
+    ? HELPER_DOWN
+    : `${fallback}: ${e.message}`;
+
 export function CompareProvider({ children }) {
   // ── 디바이스 ──────────────────────────────
   const [deviceStatus, setDeviceStatus] = useState(null);
   const [deviceImg, setDeviceImg] = useState(null); // objectURL
   const [hierarchy, setHierarchy] = useState([]);
+  const [densityInfo, setDensityInfo] = useState(null); // 밀도 캘리브레이션 상태 메시지
 
   // ── figma (플러그인: 현재 Figma 선택을 code.ts 가 push) ─────
   const [selectedFrame, setSelectedFrame] = useState(null);
@@ -65,7 +76,7 @@ export function CompareProvider({ children }) {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  // 토큰 최초 로드
+  // 토큰 최초 로드 (헬퍼 서버가 꺼져 있으면 여기서 먼저 걸린다 → 명확히 안내)
   useEffect(() => {
     tokensApi
       .all()
@@ -73,7 +84,7 @@ export function CompareProvider({ children }) {
         setTokens(tokens);
         setTokensMeta(meta);
       })
-      .catch((e) => setError("토큰 로드 실패: " + e.message));
+      .catch((e) => setError(asError(e, "토큰 로드 실패")));
   }, []);
 
   // ── 액션: 디바이스 ─────────────────────────
@@ -93,7 +104,7 @@ export function CompareProvider({ children }) {
         .then((h) => setHierarchy(h.nodes || []))
         .catch(() => setHierarchy([]));
     } catch (e) {
-      setError("캡처 실패: " + e.message);
+      setError(asError(e, "캡처 실패"));
     } finally {
       setBusy(false);
     }
@@ -117,9 +128,37 @@ export function CompareProvider({ children }) {
     try {
       setDeviceStatus(await deviceApi.status());
     } catch (e) {
-      setError("상태 조회 실패: " + e.message);
+      setError(asError(e, "상태 조회 실패"));
     }
   }, []);
+
+  // 기기 밀도를 360dp 기준으로 덮어써 캡처 텍스트 크기를 Figma 1x 와 맞춘다.
+  // (기기 자체 밀도가 바뀌므로 이후 캡처부터 반영. resetDensity 로 복구.)
+  const calibrateDensity = useCallback(async () => {
+    setBusy(true);
+    try {
+      const r = await deviceApi.calibrateDensity(360);
+      await refreshStatus();
+      setDensityInfo(`밀도 ${r.density} 적용 (${r.widthPx}px → ${r.widthDp}dp). 다시 캡처하면 반영됩니다.`);
+    } catch (e) {
+      setError(asError(e, "밀도 맞추기 실패"));
+    } finally {
+      setBusy(false);
+    }
+  }, [refreshStatus]);
+
+  const resetDensity = useCallback(async () => {
+    setBusy(true);
+    try {
+      await deviceApi.resetDensity();
+      await refreshStatus();
+      setDensityInfo("밀도 초기화됨. 다시 캡처하면 반영됩니다.");
+    } catch (e) {
+      setError(asError(e, "밀도 초기화 실패"));
+    } finally {
+      setBusy(false);
+    }
+  }, [refreshStatus]);
 
   // 새 캡처 세션 시작(id 발급 + 실제 캡처)
   const startNewCaptureSession = useCallback(async () => {
@@ -424,6 +463,7 @@ export function CompareProvider({ children }) {
     // device
     deviceStatus, deviceImg, hierarchy,
     captureDevice, refreshStatus, requestCapture, openMirror,
+    densityInfo, calibrateDensity, resetDensity,
     // 캡처 저장소
     captureSessionId, captureSaved, pendingCapture, cancelRecapture,
     discardAndRecapture, saveAndRecapture,

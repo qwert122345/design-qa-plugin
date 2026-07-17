@@ -67,6 +67,25 @@ export async function capturePng() {
   return adb.screencap(); // PNG Buffer
 }
 
+// 기기 밀도를 덮어써서 논리 폭(dp)이 targetWidthDp 가 되게 만든다.
+//   density = 물리폭(px) / targetWidthDp × 160
+// 이렇게 하면 캡처 화면의 텍스트 크기가 Figma 1x 기준(360dp)과 물리적으로 맞는다.
+// 단순 이미지 리사이즈로는 못 맞추는 걸 기기 밀도 자체를 바꿔 해결. resetDensity 로 복구.
+export async function calibrateDensity(targetWidthDp = 360) {
+  const size = parseSize(await adb.wmSize());
+  if (!size) throw new Error("기기 해상도를 읽지 못했습니다");
+  const widthDp = Number(targetWidthDp) > 0 ? Number(targetWidthDp) : 360;
+  const density = Math.round((size.width / widthDp) * 160);
+  await adb.wmDensitySet(density);
+  return { density, widthPx: size.width, widthDp };
+}
+
+// 밀도 덮어쓰기 해제 → 기기 기본 밀도로 복구.
+export async function resetDensity() {
+  await adb.wmDensityReset();
+  return { ok: true };
+}
+
 export async function getHierarchy() {
   const xml = await adb.uiautomatorDump();
   const nodes = parseHierarchy(xml); // Compose 면 빈 배열일 수 있음
