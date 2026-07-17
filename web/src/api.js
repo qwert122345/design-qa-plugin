@@ -1,10 +1,12 @@
 // 백엔드 호출은 이 파일에서만. 컴포넌트가 fetch 를 직접 부르지 말 것.
 // 엔드포인트를 추가하면 아래 해당 api 객체에 함수 한 줄만 더한다.
 
-// API 베이스 — 웹(vite dev)에선 "" (프록시가 /api 를 :3001 로 넘김),
+// API 베이스 — 웹(vite dev)에선 "" (프록시가 /api 를 :3011 로 넘김),
 // 플러그인 빌드에선 iframe 이 same-origin 서버가 없으므로 절대 주소가 필요.
-// figma-plugin 빌드가 VITE_API_BASE=http://localhost:3001 을 주입한다.
-const BASE = import.meta.env.VITE_API_BASE || "";
+// 빌드 시 vite define 이 __API_BASE__ 를 문자열 리터럴로 치환한다.
+// (import.meta 는 안 쓴다 — 플러그인 UI 는 classic 스크립트로 인라인돼야 하는데
+//  classic 스크립트에서 import.meta 는 문법 오류이기 때문.)
+const BASE = typeof __API_BASE__ !== "undefined" ? __API_BASE__ : "";
 
 // 공통 fetch — 실패하면 서버가 준 { error } 메시지로 throw.
 async function request(url, opts) {
