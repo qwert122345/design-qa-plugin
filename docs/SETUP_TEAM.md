@@ -139,6 +139,19 @@ git clone https://github.com/qwert122345/design-qa-plugin ~/design-qa-plugin
 `unauthorized`면 폰의 허용 팝업을 아직 안 누른 것이고, 아무것도 없으면 케이블/USB 디버깅을
 다시 확인하세요.
 
+> ### 💻 실기기 대신 에뮬레이터(가상 기기)를 써도 됩니다
+> 갤럭시 실기기가 없거나 USB 연결이 번거로우면, **Android Studio의 가상 기기(에뮬레이터)**로
+> 대체할 수 있습니다. 툴은 실기기든 에뮬레이터든 **똑같이 동작**합니다(둘 다 `adb`로 잡힙니다).
+>
+> 1. [Android Studio](https://developer.android.com/studio) 설치 후 실행
+> 2. 우측 **Device Manager**(휴대폰 아이콘) → **Create Virtual Device** → 폰 모델 하나 고르고
+>    → 시스템 이미지 다운로드·선택 → **Finish**
+> 3. 목록에서 만든 기기의 **▶(실행)** 을 누르면 에뮬레이터 창이 뜹니다(첫 부팅은 몇 분 걸립니다)
+> 4. QA할 앱(APK)을 에뮬레이터 **창에 드래그**하거나 Android Studio에서 **Run** 하면 설치됩니다
+>
+> **확인:** `adb devices`에 `emulator-5554  device` 처럼 나오면 준비 완료입니다.
+> (에뮬레이터는 USB 디버깅·개발자 옵션 설정이 필요 없습니다 — 켜두면 자동으로 연결됩니다.)
+
 ---
 
 ## 7. 플러그인 등록하기 (Figma에 한 번만)
