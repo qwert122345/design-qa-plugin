@@ -12,7 +12,7 @@ function bytesToObjectUrl(bytes) {
 }
 
 // ── code.ts → UI: 선택 push 구독 ──────────────────────────────
-// handler({ frame: {id,name,width,height}|null, imageUrl, children: [{id,name}] })
+// handler({ frame: {id,name,width,height}|null, imageUrl, children: [{id,name}], spec })
 let selectionHandler = null;
 export function onFigmaSelection(handler) {
   selectionHandler = handler;
@@ -32,15 +32,19 @@ window.addEventListener("message", (e) => {
         frame: msg.frame || null,
         imageUrl: msg.frame && msg.imageBytes ? bytesToObjectUrl(msg.imageBytes) : null,
         children: msg.children || [],
+        spec: msg.spec || null,
       });
   } else if (msg.type === "figma-node-image" && pending.has(msg.reqId)) {
     const resolve = pending.get(msg.reqId);
     pending.delete(msg.reqId);
-    resolve(msg.imageBytes ? bytesToObjectUrl(msg.imageBytes) : null);
+    resolve({
+      imageUrl: msg.imageBytes ? bytesToObjectUrl(msg.imageBytes) : null,
+      spec: msg.spec || null,
+    });
   }
 });
 
-// 특정 노드 이미지 요청 → objectURL (없으면 null)
+// 특정 노드 이미지+spec 요청 → { imageUrl, spec }
 export function exportFigmaNode(nodeId) {
   return new Promise((resolve) => {
     const reqId = ++reqSeq;

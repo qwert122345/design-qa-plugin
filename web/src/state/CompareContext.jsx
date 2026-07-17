@@ -300,14 +300,13 @@ export function CompareProvider({ children }) {
   // ── 액션: figma ───────────────────────────
   // 웹 버전은 fileKey 로 REST 를 브라우징했지만, 플러그인은 Figma 에서 지금
   // 선택한 노드를 code.ts 가 밀어준다. 선택이 바뀔 때마다 프레임 이미지/메타/
-  // children 을 받아 그대로 상태에 반영한다.
-  // spec 은 최소 {id,name,width,height} 만 — 색/간격/타이포 추출은 3단계.
+  // children/spec(색·간격·타이포·스타일)을 받아 그대로 상태에 반영한다.
   useEffect(() => {
-    onFigmaSelection(({ frame, imageUrl, children }) => {
+    onFigmaSelection(({ frame, imageUrl, children, spec }) => {
       setSelectedFrame(frame);
       setFigmaChildren(children);
       setSelectedChild(null);
-      setSpec(frame ? { id: frame.id, name: frame.name, width: frame.width, height: frame.height } : null);
+      setSpec(frame ? spec : null);
       setFigmaImg((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return imageUrl;
@@ -320,12 +319,12 @@ export function CompareProvider({ children }) {
     if (!child) return;
     setBusy(true);
     try {
-      const url = await exportFigmaNode(child.id);
+      const { imageUrl, spec } = await exportFigmaNode(child.id);
       setFigmaImg((prev) => {
         if (prev) URL.revokeObjectURL(prev);
-        return url;
+        return imageUrl;
       });
-      setSpec({ id: child.id, name: child.name });
+      setSpec(spec);
     } catch (e) {
       setError("컴포넌트 로드 실패: " + e.message);
     } finally {
