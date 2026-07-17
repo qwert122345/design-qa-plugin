@@ -1,6 +1,7 @@
 // 전역 비교 상태 + 액션. 백엔드 호출은 api/ 를 통해서만.
 import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
-import { deviceApi, figmaApi, tokensApi, notesApi, capturesApi } from "../api.js";
+import { deviceApi, tokensApi, notesApi, capturesApi } from "../api.js";
+import { onFigmaSelection, exportFigmaNode } from "../figmaBridge.js";
 import { CONSTANTS } from "../config/constants.js";
 
 const Ctx = createContext(null);
@@ -12,9 +13,7 @@ export function CompareProvider({ children }) {
   const [deviceImg, setDeviceImg] = useState(null); // objectURL
   const [hierarchy, setHierarchy] = useState([]);
 
-  // ── figma ────────────────────────────────
-  const [fileKey, setFileKey] = useState("");
-  const [frames, setFrames] = useState([]);
+  // ── figma (플러그인: 현재 Figma 선택을 code.ts 가 push) ─────
   const [selectedFrame, setSelectedFrame] = useState(null);
   const [figmaChildren, setFigmaChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
@@ -299,68 +298,40 @@ export function CompareProvider({ children }) {
   }, []);
 
   // ── 액션: figma ───────────────────────────
-  const loadFrames = useCallback(
-    async (search) => {
-      setBusy(true);
-      setError(null);
-      try {
-        setFrames(await figmaApi.frames(fileKey, search));
-      } catch (e) {
-        setError("프레임 로드 실패: " + e.message);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [fileKey]
-  );
-
-  const loadFrameImage = useCallback(
-    async (frame) => {
-      if (!frame) return;
+  // 웹 버전은 fileKey 로 REST 를 브라우징했지만, 플러그인은 Figma 에서 지금
+  // 선택한 노드를 code.ts 가 밀어준다. 선택이 바뀔 때마다 프레임 이미지/메타/
+  // children 을 받아 그대로 상태에 반영한다.
+  // spec 은 최소 {id,name,width,height} 만 — 색/간격/타이포 추출은 3단계.
+  useEffect(() => {
+    onFigmaSelection(({ frame, imageUrl, children }) => {
       setSelectedFrame(frame);
-      setBusy(true);
-      try {
-        const url = await figmaApi.image(fileKey, frame.id, CONSTANTS.figmaExportScale);
-        setFigmaImg((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
-        // 화면 전체 대상이면 프레임 스펙도 로드
-        setSpec(await figmaApi.spec(fileKey, frame.id));
-        // 컴포넌트 후보 로드
-        figmaApi.children(fileKey, frame.id).then(setFigmaChildren).catch(() => setFigmaChildren([]));
-      } catch (e) {
-        setError("프레임 이미지 실패: " + e.message);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [fileKey]
-  );
+      setFigmaChildren(children);
+      setSelectedChild(null);
+      setSpec(frame ? { id: frame.id, name: frame.name, width: frame.width, height: frame.height } : null);
+      setFigmaImg((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return imageUrl;
+      });
+    });
+  }, []);
 
-  const selectChild = useCallback(
-    async (child) => {
-      setSelectedChild(child);
-      if (!child) return;
-      setBusy(true);
-      try {
-        const [url, sp] = await Promise.all([
-          figmaApi.image(fileKey, child.id, CONSTANTS.figmaExportScale),
-          figmaApi.spec(fileKey, child.id),
-        ]);
-        setFigmaImg((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
-        setSpec(sp);
-      } catch (e) {
-        setError("컴포넌트 로드 실패: " + e.message);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [fileKey]
-  );
+  const selectChild = useCallback(async (child) => {
+    setSelectedChild(child);
+    if (!child) return;
+    setBusy(true);
+    try {
+      const url = await exportFigmaNode(child.id);
+      setFigmaImg((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+      setSpec({ id: child.id, name: child.name });
+    } catch (e) {
+      setError("컴포넌트 로드 실패: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   // 방향키 미세 이동
   const nudge = useCallback((dx, dy) => {
@@ -461,9 +432,8 @@ export function CompareProvider({ children }) {
     dup, dupOverwrite, dupKeepBoth, dupCancel,
     captures, loadCaptures, openCapture, removeCapture,
     trash, loadTrash, restoreCapture, purgeCapture,
-    // figma
-    fileKey, setFileKey, frames, loadFrames, selectedFrame, loadFrameImage,
-    figmaChildren, selectedChild, selectChild, figmaImg, spec,
+    // figma (플러그인: 선택 push)
+    selectedFrame, figmaChildren, selectedChild, selectChild, figmaImg, spec,
     // compare/canvas
     viewMode, setViewMode, overlayOpacity, setOverlayOpacity,
     offset, setOffset, nudge, fineScale, setFineScale,

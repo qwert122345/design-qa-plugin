@@ -1,5 +1,5 @@
 // 좌측 컨트롤 — 디바이스 / figma / 비교대상 / 모드.
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCompare } from "../../state/CompareContext.jsx";
 import CaptureSaveDialog from "./CaptureSaveDialog.jsx";
 import DuplicateNameDialog from "./DuplicateNameDialog.jsx";
@@ -7,7 +7,6 @@ import TokenViewer from "./TokenViewer.jsx";
 
 export default function ControlsPanel() {
   const c = useCompare();
-  const [search, setSearch] = useState("");
   const [tokenViewerOpen, setTokenViewerOpen] = useState(false);
 
   return (
@@ -28,40 +27,17 @@ export default function ControlsPanel() {
       {/* 이름 중복 확인 — "화면 캡처"/"메모 저장" 양쪽 저장 흐름이 공유하므로 여기 한 번만 건다. */}
       <DuplicateNameDialog />
 
-      {/* figma */}
+      {/* figma — 플러그인은 Figma 캔버스에서 지금 선택한 프레임을 자동으로 받는다 */}
       <h2>Figma</h2>
-      <label>fileKey</label>
-      <input
-        value={c.fileKey}
-        placeholder=".env DEFAULT_FILE_KEY 사용"
-        onChange={(e) => c.setFileKey(e.target.value)}
-      />
-      <div className="row" style={{ marginTop: 6 }}>
-        <input
-          placeholder="프레임 이름 검색"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && c.loadFrames(search)}
-        />
-        <button style={{ flex: "none" }} onClick={() => c.loadFrames(search)} disabled={c.busy}>
-          로드
-        </button>
-      </div>
-      {c.frames.length > 0 && (
-        <>
-          <label>화면(프레임)</label>
-          <select
-            value={c.selectedFrame?.id || ""}
-            onChange={(e) => c.loadFrameImage(c.frames.find((f) => f.id === e.target.value))}
-          >
-            <option value="">— 선택 —</option>
-            {c.frames.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.page} / {f.name}
-              </option>
-            ))}
-          </select>
-        </>
+      {c.selectedFrame ? (
+        <div className="stat">
+          <span>선택</span>
+          <b title={c.selectedFrame.name} style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {c.selectedFrame.name}
+          </b>
+        </div>
+      ) : (
+        <p className="dim" style={{ fontSize: 11 }}>Figma 캔버스에서 프레임 1개를 선택하세요.</p>
       )}
       {/* 비교 대상 */}
       <h2>비교 대상</h2>

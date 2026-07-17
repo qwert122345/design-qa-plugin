@@ -55,13 +55,6 @@ export const deviceApi = {
   mirror: (screen) => sendJson("/api/device/mirror", "POST", { screen }),
 };
 
-export const figmaApi = {
-  frames: (fileKey, search) => getJson(`/api/figma/frames${qs({ fileKey, search })}`),
-  children: (fileKey, nodeId) => getJson(`/api/figma/children${qs({ fileKey, nodeId })}`),
-  image: (fileKey, nodeId, scale) => getObjectUrl(`/api/figma/image${qs({ fileKey, nodeId, scale })}`),
-  spec: (fileKey, nodeId) => getJson(`/api/figma/spec${qs({ fileKey, nodeId })}`),
-};
-
 export const notesApi = {
   list: (captureId) => getJson(`/api/notes${qs({ captureId })}`),
   // measure: 이 메모를 남길 때 재고 있던 값(있으면). 리포트의 기대값/실제값/차이가 된다.
