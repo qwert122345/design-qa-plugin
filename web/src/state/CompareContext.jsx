@@ -17,6 +17,20 @@ const asError = (e, fallback) =>
     ? HELPER_DOWN
     : `${fallback}: ${e.message}`;
 
+// crypto.randomUUID 는 보안 컨텍스트에서만 있다. Figma 플러그인 UI 는 data: URL
+// (비보안)이라 없어서 TypeError 가 난다 → getRandomValues(비보안에서도 동작)로
+// v4 UUID 를 직접 만든다. (캡처 세션 구분용이라 암호학적 강도는 불필요.)
+function uuid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  const b = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variant
+  const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 export function CompareProvider({ children }) {
   // ── 디바이스 ──────────────────────────────
   const [deviceStatus, setDeviceStatus] = useState(null);
@@ -162,7 +176,7 @@ export function CompareProvider({ children }) {
 
   // 새 캡처 세션 시작(id 발급 + 실제 캡처)
   const startNewCaptureSession = useCallback(async () => {
-    setCaptureSessionId(crypto.randomUUID());
+    setCaptureSessionId(uuid());
     setCaptureSaved(false);
     setPendingCapture(false);
     await captureDevice();
