@@ -318,3 +318,44 @@ label { display: block; color: var(--ink-faint); margin: 8px 0 4px; font-size: 1
 .measure-delta small { font-size: 9px; color: var(--ink-faint); letter-spacing: .04em; }
 .measure-vs { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .measure-vs b { color: var(--ink); font-weight: 500; }
+
+/* ── 축소(compact) 버튼 + 창 크기 조절 핸들 ───────────────────────
+   축소 버튼은 우상단 고정, 창 리사이즈 핸들은 우하단 고정. */
+.compact-toggle {
+  position: fixed; top: 4px; right: 6px; z-index: 50;
+  font-size: 11px; padding: 2px 8px; line-height: 1.6;
+  background: var(--chrome-2); border: 1px solid var(--rule);
+}
+.compact-toggle:hover { background: var(--chrome); }
+
+.win-resize {
+  position: fixed; right: 0; bottom: 0; width: 16px; height: 16px;
+  cursor: nwse-resize; z-index: 50;
+  background:
+    linear-gradient(135deg, transparent 0 50%, var(--ink-faint) 50% 60%, transparent 60% 70%, var(--ink-faint) 70% 80%, transparent 80%);
+}
+
+/* ── 컴팩트 뷰 — 기기 캡처 + Figma 선택 두 화면만 나란히 ───────── */
+.compact-view {
+  width: 100vw; height: 100vh; background: var(--bg);
+  display: flex; flex-direction: column;
+}
+.compact-imgs {
+  flex: 1; min-height: 0; display: flex; gap: 8px; padding: 8px;
+}
+.compact-imgs figure {
+  flex: 1; min-width: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.compact-imgs figcaption {
+  font-size: 11px; color: var(--ink-dim); text-align: center; flex: none;
+}
+.compact-imgs figure > img {
+  flex: 1; min-height: 0; width: 100%;
+  object-fit: contain; object-position: center top;
+}
+.compact-ph {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-faint); font-size: 12px;
+  border: 1px dashed var(--rule); border-radius: 4px;
+}

@@ -41,8 +41,26 @@ window.addEventListener("message", (e) => {
       imageUrl: msg.imageBytes ? bytesToObjectUrl(msg.imageBytes) : null,
       spec: msg.spec || null,
     });
+  } else if (msg.type === "add-image-result") {
+    if (addImageResolve) addImageResolve(msg);
+    addImageResolve = null;
   }
 });
+
+// ── UI → code.ts: 플러그인 창 크기 조절 ────────────────────────
+export function resizeWindow(width, height) {
+  parent.postMessage({ pluginMessage: { type: "resize", width, height } }, "*");
+}
+
+// ── UI → code.ts: QA 캡처를 Figma "Design QA" 페이지에 이미지 노드로 추가 ──
+// images: [{ bytes:number[], name }] → { ok, count } | { ok:false, error }
+let addImageResolve = null;
+export function addImagesToFigma(images) {
+  return new Promise((resolve) => {
+    addImageResolve = resolve;
+    parent.postMessage({ pluginMessage: { type: "add-image", images } }, "*");
+  });
+}
 
 // 특정 노드 이미지+spec 요청 → { imageUrl, spec }
 export function exportFigmaNode(nodeId) {

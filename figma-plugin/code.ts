@@ -166,10 +166,59 @@ async function pushSelection() {
 figma.on("selectionchange", pushSelection);
 pushSelection();
 
+// ── QA 캡처를 이미지 노드로 추가 ("이미지 복사" 대체) ──────────────
+// OS 클립보드 이미지 복사는 플러그인(data: URL, 비보안)에서 불가 → 전용
+// "Design QA" 페이지에 이미지 노드로 넣는다. 원본 디자인 페이지는 안 건드림.
+const QA_PAGE_NAME = "Design QA";
+async function addImagesToQaPage(images: { bytes: number[]; name?: string }[]) {
+  let page = figma.root.children.find(
+    (p): p is PageNode => p.type === "PAGE" && p.name === QA_PAGE_NAME
+  );
+  if (!page) {
+    page = figma.createPage();
+    page.name = QA_PAGE_NAME;
+  }
+  const gap = 32;
+  let x = page.children.reduce((mx, c) => Math.max(mx, c.x + c.width + gap), 0);
+  const placed: SceneNode[] = [];
+  for (const im of images) {
+    const image = figma.createImage(new Uint8Array(im.bytes));
+    const { width, height } = await image.getSizeAsync();
+    const s = width > 400 ? 400 / width : 1; // 큰 캡처는 폭 400 으로 축소
+    const rect = figma.createRectangle();
+    rect.resize(Math.round(width * s), Math.round(height * s));
+    rect.fills = [{ type: "IMAGE", imageHash: image.hash, scaleMode: "FILL" }];
+    rect.name = im.name || "QA capture";
+    page.appendChild(rect);
+    rect.x = x;
+    rect.y = 0;
+    x += rect.width + gap;
+    placed.push(rect);
+  }
+  figma.currentPage = page;
+  if (placed.length) figma.viewport.scrollAndZoomIntoView(placed);
+  return placed.length;
+}
+
 figma.ui.onmessage = async (msg) => {
   if (!msg) return;
   if (msg.type === "close") {
     figma.closePlugin();
+  } else if (msg.type === "resize") {
+    const w = Math.max(320, Math.min(1600, Math.round(msg.width)));
+    const h = Math.max(240, Math.min(1200, Math.round(msg.height)));
+    figma.ui.resize(w, h);
+  } else if (msg.type === "add-image") {
+    try {
+      const count = await addImagesToQaPage(msg.images || []);
+      figma.ui.postMessage({ type: "add-image-result", ok: true, count });
+    } catch (e) {
+      figma.ui.postMessage({
+        type: "add-image-result",
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
   } else if (msg.type === "export-node") {
     const node = await figma.getNodeByIdAsync(msg.nodeId);
     const isScene = node && "exportAsync" in node;

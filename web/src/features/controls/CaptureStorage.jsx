@@ -1,14 +1,16 @@
-// 저장소 — 이름 붙여 저장한 캡처 목록. 클릭하면 캔버스로 다시 불러오고, 선택해서 zip으로 내보낼 수 있다.
+// 저장소 — 이름 붙여 저장한 캡처 목록. 클릭하면 캔버스로 다시 불러오고, 선택해서
+// Figma "Design QA" 페이지에 이미지(캡처+QA 메모)로 추가할 수 있다.
 import { useEffect, useState } from "react";
-import { downloadZip } from "client-zip";
 import { useCompare } from "../../state/CompareContext.jsx";
 import { capturesApi, notesApi } from "../../api.js";
 import { renderCaptureToBlob } from "../../lib/exportCapture.js";
+import { addImagesToFigma } from "../../figmaBridge.js";
 
 export default function CaptureStorage({ open, onClose }) {
   const c = useCompare();
   const [selected, setSelected] = useState(() => new Set());
-  const [busy, setBusy] = useState(null); // null | "export" | "delete"
+  const [busy, setBusy] = useState(null); // null | "figma" | "delete"
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     if (open) c.loadCaptures();
@@ -37,13 +39,16 @@ export default function CaptureStorage({ open, onClose }) {
     }
   };
 
-  const exportCaptures = async (caps) => {
+  // 선택 캡처를 캡처+QA 메모 이미지로 합성해 Figma "Design QA" 페이지에 노드로 추가.
+  // (플러그인은 OS 클립보드 이미지 복사가 불가 — data: URL 비보안 컨텍스트라
+  //  navigator.clipboard 가 없다. 그래서 Figma 안에 이미지로 넣는다.)
+  const addToFigma = async (caps) => {
     if (caps.length === 0 || busy) return;
-    setBusy("export");
+    setBusy("figma");
+    setStatus(null);
     c.setError(null);
     try {
-      const used = new Set();
-      const files = [];
+      const images = [];
       for (const cap of caps) {
         const notes = await notesApi.list(cap.id);
         // 원래 목록에서의 번호를 붙여둔다 — 나눠 그려도 핀 번호가 앱의 메모 목록과 맞는다.
@@ -53,23 +58,15 @@ export default function CaptureStorage({ open, onClose }) {
 
         for (const [i, group] of perImage.entries()) {
           const blob = await renderCaptureToBlob(capturesApi.imageUrl(cap.id), group);
-          const base = sanitize(cap.name) + (perImage.length > 1 ? `-${i + 1}` : "");
-          let name = `${base}.png`;
-          let n = 1;
-          while (used.has(name)) name = `${base}-${n++}.png`;
-          used.add(name);
-          files.push({ name, input: blob });
+          const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
+          images.push({ bytes, name: sanitize(cap.name) + (perImage.length > 1 ? `-${i + 1}` : "") });
         }
       }
-      const zipBlob = await downloadZip(files).blob();
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "design-qa-image.zip";
-      a.click();
-      URL.revokeObjectURL(url);
+      const res = await addImagesToFigma(images);
+      if (res && res.ok) setStatus(`Figma "Design QA" 페이지에 ${res.count}개 추가했습니다`);
+      else c.setError("Figma 추가 실패: " + (res?.error || "알 수 없는 오류"));
     } catch (e) {
-      c.setError("내보내기 실패: " + e.message);
+      c.setError("Figma 추가 실패: " + e.message);
     } finally {
       setBusy(null);
     }
@@ -87,14 +84,15 @@ export default function CaptureStorage({ open, onClose }) {
         ) : (
           <>
             <div className="row" style={{ marginBottom: 8 }}>
-              <button onClick={() => exportCaptures(c.captures)} disabled={!!busy}>
-                전체 내보내기 ({c.captures.length})
+              <button onClick={() => addToFigma(c.captures)} disabled={!!busy}>
+                전체 Figma에 추가 ({c.captures.length})
               </button>
-              <button onClick={() => exportCaptures(selectedCaps())} disabled={!!busy || selected.size === 0}>
-                선택 내보내기 ({selected.size})
+              <button onClick={() => addToFigma(selectedCaps())} disabled={!!busy || selected.size === 0}>
+                선택 Figma에 추가 ({selected.size})
               </button>
-              {busy === "export" && <span className="dim" style={{ fontSize: 11 }}>PNG 합성 중...</span>}
+              {busy === "figma" && <span className="dim" style={{ fontSize: 11 }}>이미지 합성 중...</span>}
               {busy === "delete" && <span className="dim" style={{ fontSize: 11 }}>삭제 중...</span>}
+              {!busy && status && <span className="dim" style={{ fontSize: 11 }}>{status}</span>}
             </div>
             {/* 삭제는 휴지통으로 가니 확인을 묻지 않는다 — 되돌릴 데가 있다. */}
             <div className="row" style={{ marginBottom: 8 }}>
