@@ -44,7 +44,7 @@ brew --version
 
 ---
 
-## 2. 프로그램 3개 설치하기
+## 2. 프로그램 2개 설치하기
 
 터미널에 **한 줄씩** 붙여넣고 엔터. (각각 1~2분 걸립니다)
 
@@ -56,24 +56,18 @@ brew install --cask android-platform-tools
 brew install scrcpy
 ```
 
-```
-brew install gh
-```
-
 각각 이런 것들입니다.
 
 | | 하는 일 |
 |---|---|
 | android-platform-tools | `adb` — 폰 화면을 Mac으로 가져옵니다 |
 | scrcpy | 폰 화면을 Mac에서 마우스로 조작합니다 (플러그인의 "기기 조작" 버튼) |
-| gh | 다음 단계에서 플러그인을 내려받을 때 GitHub 로그인에 씁니다 |
 
-**확인:** 아래 세 줄을 차례로 쳐서 전부 버전이 나오면 성공.
+**확인:** 아래 두 줄을 차례로 쳐서 전부 버전이 나오면 성공.
 
 ```
 adb version
 scrcpy --version
-gh --version
 ```
 
 ---
@@ -116,31 +110,17 @@ brew install node
 
 ## 5. 플러그인 내려받기
 
-비공개 저장소라 **GitHub 로그인이 먼저** 필요합니다. 2단계에서 깐 `gh`로 합니다.
+공개 저장소라 로그인 없이 바로 받으면 됩니다. 아래를 붙여넣고 엔터.
+(내 계정 폴더 아래에 `design-qa-plugin` 폴더가 생깁니다)
 
 ```
-gh auth login --hostname github.com --git-protocol https --web
+git clone https://github.com/qwert122345/design-qa-plugin ~/design-qa-plugin
 ```
 
-그러면 이렇게 진행됩니다.
-
-1. 터미널에 **8자리 코드**가 나옵니다 (`XXXX-XXXX` 모양). 눈으로 기억하거나 복사해 두세요.
-2. 엔터를 누르면 브라우저가 열립니다.
-3. 브라우저에 그 코드를 넣고, **초대받은 계정으로** 로그인 → 권한 허용.
-4. 터미널로 돌아오면 `✓ Logged in as ...`가 찍혀 있습니다.
-
-> 평소 웹에서 GitHub에 로그인하듯 하면 됩니다. **비밀번호를 터미널에 치는 게 아닙니다** —
-> 터미널이 비밀번호를 물어보면 뭔가 잘못된 것이니 알려주세요.
-
-로그인이 끝났으면 플러그인을 내려받습니다. (내 계정 폴더 아래에 `design-qa-plugin` 폴더가 생깁니다)
-
-```
-gh repo clone qwert122345/design-qa-plugin ~/design-qa-plugin
-```
+> 처음 `git`을 쓰면 "명령어 도구를 설치하겠냐"는 팝업이 뜰 수 있습니다 — **설치**를 눌러
+> 끝난 뒤 위 명령을 다시 실행하세요. (1번에서 Homebrew를 깔았다면 대개 이미 있습니다.)
 
 **확인:** `ls ~/design-qa-plugin`를 쳐서 `run.command`, `figma-plugin`, `server` 같은 게 보이면 성공.
-
-> `Repository not found`가 나오면 아직 저장소 초대가 안 된 것이니 알려주세요.
 
 ---
 
@@ -212,8 +192,7 @@ cd ~/design-qa-plugin && git pull
 | 증상 | 해결 |
 |---|---|
 | `brew: command not found` (1번 이후에도) | Homebrew 설치 끝에 나온 `Next steps:` 줄을 안 붙여넣은 것. 1번 마지막 참고 |
-| `gh auth login`이 비밀번호를 물어봄 | `--web`을 빠뜨린 것. 5번의 명령을 통째로 다시 붙여넣으세요 |
-| `gh repo clone`에 `Repository not found` | 저장소 초대가 아직이거나, 로그인 계정이 다른 것. `gh auth status`로 계정 확인 후 공유 |
+| `git clone` 시 명령어 도구 설치 팝업 | **설치**를 누르고, 끝난 뒤 5번 명령을 다시 실행 |
 | 더블클릭했더니 "권한이 없습니다" | 터미널에서 `chmod +x ~/design-qa-plugin/run.command` 실행 후 다시 |
 | 더블클릭했더니 "확인되지 않은 개발자" | 파일 우클릭 → 열기 → 열기 (한 번만) |
 | 터미널 창이 켜졌다가 바로 닫힘 | 창에 뜬 빨간 메시지를 캡처해서 공유 |
