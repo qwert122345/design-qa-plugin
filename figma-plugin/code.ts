@@ -167,19 +167,13 @@ figma.on("selectionchange", pushSelection);
 pushSelection();
 
 // ── QA 캡처를 이미지 노드로 추가 ("이미지 복사" 대체) ──────────────
-// OS 클립보드 이미지 복사는 플러그인(data: URL, 비보안)에서 불가 → 전용
-// "Design QA" 페이지에 이미지 노드로 넣는다. 원본 디자인 페이지는 안 건드림.
-const QA_PAGE_NAME = "Design QA";
-async function addImagesToQaPage(images: { bytes: number[]; name?: string }[]) {
-  let page = figma.root.children.find(
-    (p): p is PageNode => p.type === "PAGE" && p.name === QA_PAGE_NAME
-  );
-  if (!page) {
-    page = figma.createPage();
-    page.name = QA_PAGE_NAME;
-  }
+// OS 클립보드 이미지 복사는 플러그인(data: URL, 비보안)에서 불가 → 지금 보고 있는
+// 페이지의 뷰포트 중앙에 이미지 노드로 넣는다. 기존 노드는 안 건드리고 추가만.
+async function addImagesToCurrentPage(images: { bytes: number[]; name?: string }[]) {
+  const page = figma.currentPage;
+  const center = figma.viewport.center; // 사용자가 지금 보고 있는 위치
   const gap = 32;
-  let x = page.children.reduce((mx, c) => Math.max(mx, c.x + c.width + gap), 0);
+  let x = center.x;
   const placed: SceneNode[] = [];
   for (const im of images) {
     const image = figma.createImage(new Uint8Array(im.bytes));
@@ -191,12 +185,14 @@ async function addImagesToQaPage(images: { bytes: number[]; name?: string }[]) {
     rect.name = im.name || "QA capture";
     page.appendChild(rect);
     rect.x = x;
-    rect.y = 0;
+    rect.y = center.y;
     x += rect.width + gap;
     placed.push(rect);
   }
-  figma.currentPage = page;
-  if (placed.length) figma.viewport.scrollAndZoomIntoView(placed);
+  if (placed.length) {
+    page.selection = placed; // 바로 Cmd+C 할 수 있게 선택
+    figma.viewport.scrollAndZoomIntoView(placed);
+  }
   return placed.length;
 }
 
@@ -210,7 +206,7 @@ figma.ui.onmessage = async (msg) => {
     figma.ui.resize(w, h);
   } else if (msg.type === "add-image") {
     try {
-      const count = await addImagesToQaPage(msg.images || []);
+      const count = await addImagesToCurrentPage(msg.images || []);
       figma.ui.postMessage({ type: "add-image-result", ok: true, count });
     } catch (e) {
       figma.ui.postMessage({

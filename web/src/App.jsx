@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import ControlsPanel from "./features/controls/ControlsPanel.jsx";
 import CompareCanvas from "./features/compare/CompareCanvas.jsx";
+import CompactView from "./features/compare/CompactView.jsx";
 import SpecPanel from "./features/spec/SpecPanel.jsx";
 import { useCompare } from "./state/CompareContext.jsx";
 import { resizeWindow } from "./figmaBridge.js";
@@ -30,7 +31,7 @@ const clampWin = (w, h) => ({
 });
 
 export default function App() {
-  const { error, deviceImg, figmaImg } = useCompare();
+  const { error } = useCompare();
   const [leftW, setLeftW] = useState(() => Number(store.get("qa.leftW")) || 300);
   const [rightW, setRightW] = useState(() => Number(store.get("qa.rightW")) || 320);
   const [compact, setCompact] = useState(false);
@@ -72,23 +73,7 @@ export default function App() {
     e.currentTarget.releasePointerCapture?.(e.pointerId);
   }, []);
 
-  if (compact) {
-    return (
-      <div className="compact-view">
-        <button className="compact-toggle" onClick={toggleCompact} title="원래 화면으로">↔ 확대</button>
-        <div className="compact-imgs">
-          <figure>
-            <figcaption>기기 캡처</figcaption>
-            {deviceImg ? <img src={deviceImg} alt="기기 캡처" /> : <div className="compact-ph">화면 캡처 없음</div>}
-          </figure>
-          <figure>
-            <figcaption>Figma</figcaption>
-            {figmaImg ? <img src={figmaImg} alt="Figma 선택" /> : <div className="compact-ph">Figma 선택 없음</div>}
-          </figure>
-        </div>
-      </div>
-    );
-  }
+  if (compact) return <CompactView onExpand={toggleCompact} />;
 
   return (
     <div className="app" style={{ gridTemplateColumns: `${leftW}px 4px 1fr 4px ${rightW}px` }}>
