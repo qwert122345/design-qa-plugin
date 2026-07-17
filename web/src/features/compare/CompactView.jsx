@@ -107,10 +107,10 @@ function DevicePane() {
         onPointerUp={onUp}
       >
         <img src={c.deviceImg} alt="기기 캡처" draggable={false} />
-        {/* 드래그 중 영역 미리보기 */}
+        {/* 드래그 중 영역 미리보기 — 저장된 메모 영역과 같은 노란색(--warn) */}
         {c.region && (
           <div
-            className="note-region pending"
+            className="note-region"
             style={{ position: "absolute", pointerEvents: "none",
               left: c.region.x * scale, top: c.region.y * scale,
               width: c.region.w * scale, height: c.region.h * scale }}
