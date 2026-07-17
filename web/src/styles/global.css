@@ -321,12 +321,14 @@ label { display: block; color: var(--ink-faint); margin: 8px 0 4px; font-size: 1
 
 /* ── 축소(compact) 버튼 + 창 크기 조절 핸들 ───────────────────────
    축소 버튼은 우상단 고정, 창 리사이즈 핸들은 우하단 고정. */
-.compact-toggle {
-  position: fixed; top: 4px; right: 6px; z-index: 50;
+.compact-toggle, .spec-toggle {
+  position: fixed; top: 4px; z-index: 50;
   font-size: 11px; padding: 2px 8px; line-height: 1.6;
   background: var(--chrome-2); border: 1px solid var(--rule);
 }
-.compact-toggle:hover { background: var(--chrome); }
+.compact-toggle { right: 6px; }
+.spec-toggle { right: 74px; }
+.compact-toggle:hover, .spec-toggle:hover { background: var(--chrome); }
 
 .win-resize {
   position: fixed; right: 0; bottom: 0; width: 16px; height: 16px;

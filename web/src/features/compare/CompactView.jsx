@@ -2,6 +2,7 @@
 // 기기 캡처를 클릭하면 그 지점에 QA 메모를 남길 수 있다(NotesLayer 재사용).
 import { useRef, useState, useLayoutEffect } from "react";
 import { useCompare } from "../../state/CompareContext.jsx";
+import { CONSTANTS } from "../../config/constants.js";
 import NotesLayer from "./NotesLayer.jsx";
 
 export default function CompactView({ onExpand }) {
@@ -48,17 +49,43 @@ function DevicePane() {
     return () => ro.disconnect();
   }, [nat]);
 
-  if (!c.deviceImg) return <div className="compact-ph">화면 캡처 없음</div>;
+  // 드래그 제스처 상태 — 전체 뷰의 annotation 도구와 동일한 규칙.
+  // 클릭(임계값 미만)이면 지점 메모, 드래그면 영역 메모.
+  const gesture = useRef(null);
 
-  const onClick = (e) => {
+  const toNat = (e, el) => {
+    const r = el.getBoundingClientRect();
+    const clamp = (v, max) => Math.max(0, Math.min(max, v));
+    return { x: clamp((e.clientX - r.left) / scale, nat.w), y: clamp((e.clientY - r.top) / scale, nat.h) };
+  };
+
+  const onDown = (e) => {
     if (!nat || !c.captureSessionId) return;
-    // 기존 핀/카드/폼을 조작하는 클릭이면 새 메모를 찍지 않는다.
-    if (e.target.closest && e.target.closest(".note-pin, .note-card, .note-region")) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - r.left) / scale;
-    const y = (e.clientY - r.top) / scale;
-    if (x < 0 || y < 0 || x > nat.w || y > nat.h) return;
-    c.setNotePending({ x, y });
+    if (e.target.closest && e.target.closest(".note-pin, .note-card")) return; // 기존 핀/카드 조작
+    const p = toNat(e, e.currentTarget);
+    gesture.current = { start: p, rect: { x: p.x, y: p.y, w: 0, h: 0 } };
+    c.setRegion({ ...gesture.current.rect, dragging: true });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onMove = (e) => {
+    const g = gesture.current;
+    if (!g) return;
+    const p = toNat(e, e.currentTarget);
+    g.rect = {
+      x: Math.min(g.start.x, p.x), y: Math.min(g.start.y, p.y),
+      w: Math.abs(p.x - g.start.x), h: Math.abs(p.y - g.start.y),
+    };
+    c.setRegion({ ...g.rect, dragging: true });
+  };
+  const onUp = (e) => {
+    const g = gesture.current;
+    if (!g) return;
+    gesture.current = null;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    c.setRegion(null);
+    const t = CONSTANTS.noteDragThresholdPx;
+    if (g.rect.w < t && g.rect.h < t) c.setNotePending({ x: g.start.x, y: g.start.y }); // 클릭 — 지점
+    else c.setNotePending(g.rect); // 드래그 — 영역
   };
 
   const w = nat ? nat.w * scale : 0;
@@ -66,8 +93,23 @@ function DevicePane() {
 
   return (
     <div className="compact-device-box" ref={boxRef}>
-      <div className="compact-device-inner" style={{ width: w, height: h }} onClick={onClick}>
+      <div
+        className="compact-device-inner"
+        style={{ width: w, height: h }}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+      >
         <img src={c.deviceImg} alt="기기 캡처" draggable={false} />
+        {/* 드래그 중 영역 미리보기 */}
+        {c.region && (
+          <div
+            className="note-region pending"
+            style={{ position: "absolute", pointerEvents: "none",
+              left: c.region.x * scale, top: c.region.y * scale,
+              width: c.region.w * scale, height: c.region.h * scale }}
+          />
+        )}
         {nat && <NotesLayer view={{ displayScale: scale }} />}
       </div>
     </div>

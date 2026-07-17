@@ -35,6 +35,7 @@ export default function App() {
   const [leftW, setLeftW] = useState(() => Number(store.get("qa.leftW")) || 300);
   const [rightW, setRightW] = useState(() => Number(store.get("qa.rightW")) || 320);
   const [compact, setCompact] = useState(false);
+  const [rightOpen, setRightOpen] = useState(() => store.get("qa.rightOpen") !== "0");
   const [winSize, setWinSize] = useState(() => ({
     w: Number(store.get("qa.winW")) || FULL_DEFAULT.w,
     h: Number(store.get("qa.winH")) || FULL_DEFAULT.h,
@@ -42,6 +43,7 @@ export default function App() {
 
   useEffect(() => store.set("qa.leftW", leftW), [leftW]);
   useEffect(() => store.set("qa.rightW", rightW), [rightW]);
+  useEffect(() => store.set("qa.rightOpen", rightOpen ? "1" : "0"), [rightOpen]);
   useEffect(() => { store.set("qa.winW", winSize.w); store.set("qa.winH", winSize.h); }, [winSize]);
 
   // 로드 시 기억한 full 크기로 창 맞춤
@@ -76,7 +78,13 @@ export default function App() {
   if (compact) return <CompactView onExpand={toggleCompact} />;
 
   return (
-    <div className="app" style={{ gridTemplateColumns: `${leftW}px 4px 1fr 4px ${rightW}px` }}>
+    <div
+      className="app"
+      style={{ gridTemplateColumns: rightOpen ? `${leftW}px 4px 1fr 4px ${rightW}px` : `${leftW}px 4px 1fr` }}
+    >
+      <button className="spec-toggle" onClick={() => setRightOpen((o) => !o)} title="스펙 패널 열기/닫기">
+        {rightOpen ? "스펙 ▶" : "◀ 스펙"}
+      </button>
       <button className="compact-toggle" onClick={toggleCompact} title="축소 — 기기/Figma 두 화면만 보기">⊟ 축소</button>
       <aside className="pane">
         <ControlsPanel />
@@ -86,10 +94,12 @@ export default function App() {
         {error && <div className="err" style={{ padding: "6px 12px" }}>⚠ {error}</div>}
         <CompareCanvas />
       </main>
-      <Resizer onDrag={(dx) => setRightW((w) => clamp(w - dx))} />
-      <aside className="pane">
-        <SpecPanel />
-      </aside>
+      {rightOpen && <Resizer onDrag={(dx) => setRightW((w) => clamp(w - dx))} />}
+      {rightOpen && (
+        <aside className="pane">
+          <SpecPanel />
+        </aside>
+      )}
       {/* 창 크기 조절 핸들 */}
       <div
         className="win-resize"
