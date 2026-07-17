@@ -1,3 +1,7 @@
 node_modules/
 figma-plugin/dist/
+reference/**/dist/
+reference/**/node_modules/
+qa-data/
+.env
 .DS_Store

@@ -1,0 +1,320 @@
+/* ─────────────────────────────────────────────────────────────
+   이 툴은 색을 판정하는 계측기다. 그래서 화면 전체를 "관측 부스"로 다룬다.
+
+   부스 원칙: 크롬(패널·버튼·테두리·글자)은 전부 무채색(R=G=B)이다.
+   색 평가용 관측 부스의 주변을 중성 회색으로 규정하는 것과 같은 이유 —
+   시야 안의 채도는 동시대비로 색 판단을 오염시킨다. 스포이드로 찍은 색이
+   토큰과 같은지 눈으로 판정하는 도구에서 파란 버튼은 계측 오차다.
+
+   따라서 색은 오직 두 곳에만 허용한다:
+     ① 판정 대상 (기기 스크린샷 · Figma 이미지)
+     ② 계측 결과 (스와치 · 판정 뱃지 · 메모 카테고리)
+   크롬의 상태 표시는 색상이 아니라 명도 반전으로 한다.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* 부스 — 전부 무채색. 채도 0. */
+  --booth: #1c1c1c;      /* 판정 대상을 놓는 바닥. 가장 어둡고 완전한 중성. */
+  --chrome: #242424;     /* 패널 */
+  --chrome-2: #2e2e2e;   /* 입력·카드처럼 한 단 올라온 면 */
+  --rule: #3d3d3d;       /* 장식용 헤어라인 — 구분선·제목 밑줄. 정보가 아니라 대비 요구 없음. */
+  --edge: #777777;       /* 조작 요소(버튼·입력)의 경계. WCAG 1.4.11 이 3:1 을 요구하는 곳 —
+                            "이게 누를 수 있는 것"임을 알려주는 정보라서 흐리면 안 된다. */
+  --edge-lit: #a8a8a8;   /* hover */
+  /* 3단계 전부 가장 어두운 면(--chrome-2) 위에서도 대비 4.5:1 이상.
+     라벨은 밝기를 죽여서가 아니라 크기·자간·대문자로 물러나게 한다. */
+  --ink: #e8e8e8;       /* 11.1:1 on --chrome-2 */
+  --ink-dim: #b0b0b0;   /*  6.3:1 */
+  --ink-faint: #959595; /*  4.5:1 — 여기가 하한. 더 어둡게 하지 말 것. */
+
+  /* 계측 결과에만 쓰는 색. 크롬에 쓰지 말 것.
+     전부 어두운 면 위에서 4.5:1 을 넘도록 밝기를 맞췄다. 색상(hue)은 그대로다. */
+  --ok: #2ecc71;
+  --warn: #f1c40f;
+  --off: #f4756a;      /* #e74c3c 는 어두운 배경에서 3.5:1 이라 미달이었다 */
+
+  /* 메모 카테고리 — 칩 배경. 글자는 --chip-ink 로 통일(흰 글자는 4색 중 3색에서 미달). */
+  --cat-color: #2e77ff;  /* #2974ff 에서 밝기만 +0.01. ΔE 2.3 — 눈으로 같은 파랑 */
+  --cat-text: #2ecc71;
+  --cat-image: #b366f5;
+  --cat-layout: #e67e22;
+  --cat-motion: #ff5c8a; /* 나머지 4색과 색상환에서 65° 이상 떨어진 자리 */
+  --chip-ink: #141414;
+
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--booth);
+  color: var(--ink);
+  font: 13px/1.45 var(--sans);
+  /* 슬라이더·체크박스는 OS 기본값이 형광 파랑이다. scale 슬라이더는 캔버스
+     바로 위에 붙어 있어서 색 판정 시야 한복판에 채도를 얹는다. 무채색으로 덮는다. */
+  accent-color: var(--ink);
+}
+
+/* 계측값은 자리가 흔들리면 안 된다 — 스포이드 hex 는 커서를 옮길 때마다
+   숫자가 바뀌는데, 폭이 제각각이면 값이 덜덜 떨려서 읽을 수가 없다. */
+.mono, input, .stat b, .badge, .cand-de { font-variant-numeric: tabular-nums; }
+
+/* 키보드 초점도 무채색으로. */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.app {
+  display: grid;
+  grid-template-columns: 300px 4px 1fr 4px 320px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.pane {
+  min-width: 0; /* 긴 텍스트가 그리드를 밀어내지 않고 패널 안에서 잘리도록 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px;
+  background: var(--chrome);
+}
+.pane.center { padding: 0; display: flex; flex-direction: column; background: var(--booth); }
+
+.resizer {
+  cursor: col-resize;
+  background: var(--rule);
+  touch-action: none;
+}
+.resizer:hover, .resizer:active { background: var(--ink-faint); }
+
+/* 섹션 라벨 — 작고 조용하게. 주인공은 아래의 측정값이다. */
+h2 {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); margin: 18px 0 8px;
+  padding-bottom: 5px; border-bottom: 1px solid var(--rule);
+}
+h2:first-child { margin-top: 0; }
+
+button {
+  background: var(--chrome-2);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--sans);
+}
+button:hover:not(:disabled) { border-color: var(--edge-lit); }
+/* 상태는 색상이 아니라 명도 반전으로 — 부스 안에 채도를 들이지 않는다. */
+button.primary, button.active {
+  background: var(--ink); border-color: var(--ink); color: var(--booth); font-weight: 600;
+}
+button.primary:hover:not(:disabled), button.active:hover:not(:disabled) { background: #fff; border-color: #fff; }
+/* .35 로 낮췄더니 2.9:1 까지 떨어져 읽히질 않았다. 비활성 컨트롤은 WCAG 대비 요구
+   대상이 아니지만, 안 보이는 것과 꺼진 것은 다르다. */
+button:disabled { opacity: .5; cursor: default; }
+
+input, select {
+  background: var(--chrome-2);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  width: 100%;
+  font-family: var(--sans);
+}
+input:focus, select:focus { border-color: var(--edge-lit); }
+label { display: block; color: var(--ink-faint); margin: 8px 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+
+.row { display: flex; gap: 6px; align-items: center; }
+.row > * { flex: 1; }
+.chip-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip-row button { flex: none; }
+
+/* 계측 한 줄: 라벨은 물러나고 값이 앞에 선다. */
+.stat { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 4px 0; color: var(--ink-dim); font-size: 11px; }
+.stat b { color: var(--ink); font-family: var(--mono); font-size: 12px; font-weight: 500; }
+
+/* 판정 뱃지 — 계측 결과라서 색을 쓴다. */
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-family: var(--mono); background: var(--chrome-2); color: var(--ink-dim); }
+.badge.exact { background: rgba(46,204,113,.14); color: var(--ok); }
+.badge.near { background: rgba(241,196,15,.14); color: var(--warn); }
+.badge.off { background: rgba(244,117,106,.14); color: var(--off); }
+
+.swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid var(--rule); display: inline-block; vertical-align: middle; }
+
+.mono { font-family: var(--mono); }
+.dim { color: var(--ink-dim); }
+.err { color: var(--off); font-size: 12px; margin: 8px 0; }
+.copyable { cursor: copy; }
+.copyable:hover { text-decoration: underline; }
+
+/* ── 시그니처: 스플릿 스와치 ─────────────────────────────────
+   색차는 두 견본이 맞닿아 있을 때만 눈으로 판정된다. 떨어뜨려 놓으면
+   사이의 배경이 끼어들어 판단이 흐려진다 — 물리적인 색 비교에서 칩을
+   시료에 대고 보는 이유다. 그래서 찍은 색과 후보 토큰 색 사이에는
+   경계선도 여백도 두지 않는다. 이 붙임이 이 툴의 판단 그 자체다. */
+.split {
+  display: flex; flex: none;
+  width: 46px; height: 30px;
+  border: 1px solid var(--rule); border-radius: 2px; overflow: hidden;
+}
+.split > i { flex: 1; display: block; } /* 두 견본 사이에 아무것도 넣지 않는다 */
+
+/* 단위 표기 — 값 옆에서 물러나 있는다. px / dp / ΔE 는 값이 아니라 값의 꼬리표다. */
+.readout-unit { font-size: 10px; color: var(--ink-faint); margin-left: 3px; letter-spacing: .04em; }
+
+/* 후보 한 줄 — 스플릿 스와치 + 이름 + ΔE */
+.cand { display: flex; align-items: center; gap: 9px; padding: 5px 0; }
+.cand-name { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 상대 확률 — ΔE 가 실측값이고 이건 후보들 사이의 상대 순위라서 뒤로 물린다. */
+.cand-name em { font-style: normal; color: var(--ink-faint); font-size: 10px; margin-left: 6px; }
+.cand-de { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+.cand-de small { font-size: 9px; color: var(--ink-faint); letter-spacing: .04em; }
+.cand:first-child .cand-name { font-weight: 700; }
+
+/* 캔버스 */
+.canvas-toolbar { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--rule); align-items: center; flex-wrap: wrap; background: var(--chrome); position: relative; z-index: 20; }
+
+/* 정렬 아이콘 버튼 */
+.align-group { display: inline-flex; align-items: center; gap: 2px; }
+.align-btn { padding: 4px 5px; line-height: 0; }
+.align-btn svg { display: block; }
+.toolbar-sep { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; }
+
+/* 설명 툴팁 (ⓘ) */
+.infotip, .infotip-wrap { position: relative; display: inline-flex; align-items: center; gap: 2px; }
+.info-btn { padding: 2px 5px; font-size: 12px; line-height: 1; color: var(--ink-dim); }
+.info-btn.active { background: var(--ink); border-color: var(--ink); color: var(--booth); }
+.tooltip {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+  width: 264px; padding: 10px 12px;
+  background: var(--chrome-2); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  font-size: 11.5px; line-height: 1.55; font-weight: 400; text-align: left; white-space: normal;
+}
+.tooltip-title { font-weight: 600; margin-bottom: 5px; color: var(--ink); }
+.tooltip b { color: #fff; font-weight: 600; }
+.tooltip-close { position: absolute; top: 4px; right: 4px; padding: 0 5px; font-size: 13px; line-height: 1.2; color: var(--ink-dim); }
+.canvas-stage { flex: 1; overflow: auto; position: relative; display: flex; }
+.canvas-host { margin: auto; position: relative; }
+.layer { position: absolute; top: 0; left: 0; image-rendering: pixelated; user-select: none; -webkit-user-drag: none; }
+.hint { color: var(--ink-dim); font-size: 11px; padding: 4px 12px; }
+.magnifier {
+  position: absolute; z-index: 40; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--chrome-2); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.magnifier-canvas-wrap { position: relative; }
+.magnifier-canvas-wrap canvas { display: block; border-radius: 4px; }
+.magnifier-center {
+  position: absolute; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.6);
+  box-sizing: border-box; pointer-events: none;
+}
+.magnifier-info { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+
+/* QA 메모 카테고리 칩 */
+/* 칩 글자는 5색 모두 어두운 잉크로 통일한다. 흰 글자는 Color/Image/Layout 에서
+   대비 2.9~4.2:1 로 미달이었다(10px bold 는 WCAG 의 "큰 글자"가 아니라 4.5:1 필요). */
+.cat-chip {
+  display: inline-block; padding: 1px 7px; border-radius: 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: .02em; color: var(--chip-ink);
+}
+.cat-chip.cat-color { background: var(--cat-color); }
+.cat-chip.cat-text { background: var(--cat-text); }
+.cat-chip.cat-image { background: var(--cat-image); }
+.cat-chip.cat-layout { background: var(--cat-layout); }
+.cat-chip.cat-motion { background: var(--cat-motion); }
+
+/* 모달 (캡처 저장 확인 / 저장소) */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  width: 320px; max-height: 80vh; overflow-y: auto;
+  background: var(--chrome); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 16px; box-shadow: 0 16px 48px rgba(0,0,0,.6);
+}
+.modal-wide { width: 640px; }
+.modal h3 { margin: 0 0 4px; font-size: 14px; }
+
+.capture-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.capture-card { position: relative; background: var(--chrome-2); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.capture-card img { width: 100%; aspect-ratio: 9/16; object-fit: cover; object-position: top; display: block; cursor: pointer; background: #000; }
+.capture-card-info { padding: 6px 8px; }
+.capture-card-info b { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.capture-card-del {
+  position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; padding: 0;
+  border-radius: 50%; line-height: 1; font-size: 11px; background: rgba(0,0,0,.6); border-color: transparent;
+}
+.capture-card-check {
+  position: absolute; top: 6px; left: 6px; z-index: 1;
+  width: 16px; height: 16px; margin: 0;
+}
+
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-height: 60vh; overflow-y: auto; }
+.token-card {
+  display: flex; align-items: center; gap: 8px; padding: 6px;
+  background: var(--chrome-2); border: 1px solid var(--rule); border-radius: 6px; cursor: copy;
+}
+.token-card:hover { border-color: var(--edge-lit); }
+.token-swatch { width: 28px; height: 28px; border-radius: 5px; border: 1px solid var(--rule); flex: none; }
+.token-card-info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.token-card-info b { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* QA 메모 — figma 주석 스타일 핀 + 카드 */
+.note-pin {
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: var(--warn); color: var(--booth); border: 2px solid #fff;
+  font-size: 11px; font-weight: 700; line-height: 1; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  pointer-events: auto; cursor: pointer;
+}
+.note-pin.pending { background: #fff; color: var(--booth); }
+.note-card {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  width: 220px; background: var(--chrome-2); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: auto;
+  font-size: 12px; z-index: 50; text-align: left;
+}
+.note-card textarea {
+  width: 100%; resize: vertical; font: inherit; background: var(--chrome);
+  color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 6px;
+}
+.note-card button { flex: none; }
+.note-region {
+  position: absolute; border: 2px solid var(--warn); background: rgba(241,196,15,.15);
+  box-sizing: border-box;
+}
+.note-region.pending { border-color: #fff; background: none; }
+
+.reset-fab {
+  position: absolute; right: 12px; bottom: 12px; z-index: 30;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--chrome); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 6px 8px; box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+.reset-fab span { font-size: 11px; }
+
+/* ── 메모에 붙는 측정값 ─────────────────────────────────────
+   개발자 리포트의 기대값/실제값/차이가 그대로 이 값이다. 그래서 무엇이 붙는지
+   메모를 쓰는 순간 보이고, 저장된 뒤에도 계속 보여야 한다. */
+.measure-attach { margin-top: 8px; }
+.measure-attach button {
+  display: block; width: 100%; margin-top: 4px;
+  font-family: var(--mono); font-size: 10.5px; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.measure-row {
+  display: flex; align-items: baseline; gap: 7px;
+  margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--rule);
+}
+.measure-delta { font-family: var(--mono); font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.measure-delta small { font-size: 9px; color: var(--ink-faint); letter-spacing: .04em; }
+.measure-vs { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.measure-vs b { color: var(--ink); font-weight: 500; }

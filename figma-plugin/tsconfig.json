@@ -1,13 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["ES2017", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "target": "es2017",
+    "lib": ["es2017", "dom"],
     "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@figma", "./node_modules/@types"]
+    "typeRoots": ["../node_modules/@figma"]
   },
-  "include": ["src"]
+  "files": ["code.ts"]
 }

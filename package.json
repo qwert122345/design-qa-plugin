@@ -1,0 +1,34 @@
+{
+  "name": "design-qa-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "design-qa 웹툴의 Figma 플러그인 버전 — helper 서버(adb 캡처·노트·캡처저장·토큰) + 플러그인 UI",
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "node --watch --env-file-if-exists=.env server/index.js",
+    "dev:web": "vite",
+    "server": "node --env-file-if-exists=.env server/index.js",
+    "build:ui": "cross-env VITE_API_BASE=http://localhost:3011 vite build",
+    "build:code": "esbuild figma-plugin/code.ts --bundle --format=iife --target=es2017 --outfile=figma-plugin/dist/code.js",
+    "build": "npm run build:ui && npm run build:code",
+    "tokens:verify": "node server/scripts/verifyTokens.js"
+  },
+  "dependencies": {
+    "client-zip": "^2.5.0",
+    "express": "^5.2.1",
+    "fast-xml-parser": "^4.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.94.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.10",
+    "vite-plugin-singlefile": "^2.0.1"
+  }
+}

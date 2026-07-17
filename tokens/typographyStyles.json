@@ -1,0 +1,21 @@
+[
+  { "style": "Title 1_Medium",    "font": "SUIT", "weight": 600, "size": 24, "lineHeight": 32, "letterSpacingRef": "Text_LetterSpacing_500" },
+  { "style": "Title 1_Bold",      "font": "SUIT", "weight": 700, "size": 24, "lineHeight": 32, "letterSpacingRef": "Text_LetterSpacing_500" },
+  { "style": "Title 1_ExtraBold", "font": "SUIT", "weight": 800, "size": 24, "lineHeight": 32, "letterSpacingRef": "Text_LetterSpacing_500" },
+  { "style": "Title 2_Medium",    "font": "SUIT", "weight": 600, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_400" },
+  { "style": "Title 2_Bold",      "font": "SUIT", "weight": 700, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_400" },
+  { "style": "Title 2_ExtraBold", "font": "SUIT", "weight": 800, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_400" },
+  { "style": "Body 1_Regular",    "font": "SUIT", "weight": 500, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body 1_Medium",     "font": "SUIT", "weight": 600, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body 1_Bold",       "font": "SUIT", "weight": 700, "size": 20, "lineHeight": 28, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body2_Regular",     "font": "SUIT", "weight": 500, "size": 16, "lineHeight": 24, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body2_Medium",      "font": "SUIT", "weight": 600, "size": 16, "lineHeight": 24, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body2_Bold",        "font": "SUIT", "weight": 700, "size": 16, "lineHeight": 24, "letterSpacingRef": "Text_LetterSpacing_300" },
+  { "style": "Body3_Regular",     "font": "SUIT", "weight": 500, "size": 14, "lineHeight": 20, "letterSpacingRef": "Text_LetterSpacing_200" },
+  { "style": "Body3_Medium",      "font": "SUIT", "weight": 600, "size": 14, "lineHeight": 20, "letterSpacingRef": "Text_LetterSpacing_200" },
+  { "style": "Body3_Bold",        "font": "SUIT", "weight": 700, "size": 14, "lineHeight": 20, "letterSpacingRef": "Text_LetterSpacing_200" },
+  { "style": "Caption 1_Regular", "font": "SUIT", "weight": 500, "size": 14, "lineHeight": 18, "letterSpacingRef": "Text_LetterSpacing_200" },
+  { "style": "Caption 1_Medium",  "font": "SUIT", "weight": 600, "size": 14, "lineHeight": 18, "letterSpacingRef": "Text_LetterSpacing_200" },
+  { "style": "Caption 2_Regular", "font": "SUIT", "weight": 500, "size": 12, "lineHeight": 16, "letterSpacingRef": "Text_LetterSpacing_100" },
+  { "style": "Caption 2_Medium",  "font": "SUIT", "weight": 600, "size": 12, "lineHeight": 16, "letterSpacingRef": "Text_LetterSpacing_100" }
+]
